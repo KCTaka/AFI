@@ -1,0 +1,7 @@
+torch
+numpy
+torch_directml
+models
+torchvision
+multiprocessing
+scipy
