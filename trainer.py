@@ -13,7 +13,10 @@ from torchvision.utils import make_grid
 from models.autoencoder.utils import print_colored, format_input
 
 class VAETrainer:
-    def __init__(self, model, discriminator, dataset_train, dataset_test=None, dataset_val=None,
+    def __init__(self, model, discriminator, lpips,
+                 dataset_train, 
+                 dataset_test=None, 
+                 dataset_val=None,
                   batch_size=32, 
                   learning_rate=2e-4, 
                   epochs=10, 
@@ -24,6 +27,7 @@ class VAETrainer:
         
         self.model = model
         self.discriminator = discriminator
+        self.lpips = lpips
         self.dataset_train = dataset_train 
         self.dataset_val = dataset_val
         self.dataset_test = dataset_test
@@ -53,8 +57,9 @@ class VAETrainer:
         self.d_optimizer = optim.Adam(discriminator.parameters(), lr=learning_rate)
         
         # Loss functions
-        self.l2loss = nn.MSELoss()
+        self.l2_loss = nn.MSELoss()
         self.d_criterion = nn.CrossEntropyLoss()
+        self.lpips_loss = lpips
         
         # TensorBoard writer
         self.writer = SummaryWriter(log_dir=self.local_dir)
@@ -120,7 +125,7 @@ class VAETrainer:
         
         print_colored(f"Checkpoint loaded from {checkpoint_path}", color='blue')
         
-    def _collect_sample(data):    
+    def _collect_sample(self, data):    
         return data[0]
     
     def _denormalize_images(self, x):
@@ -195,8 +200,9 @@ class VAETrainer:
                 x = x.to(self.device)
                 batch_num = x.size(0)
                 x_reconst, z, internal_loss = self.model(x)
-                recon_loss = self.l2loss(x_reconst, x)
-                loss = recon_loss + internal_loss
+                recon_loss = self.l2_loss(x_reconst, x)
+                perceptual_loss = self.lpips(x_reconst, x)
+                loss = recon_loss + internal_loss + perceptual_loss
                 
                 if epoch > 1: # Adversarial Loss
                     # Compute adversarial loss only after the first epoch
@@ -211,7 +217,8 @@ class VAETrainer:
                 self.optimizer.step()
                     
                 global_step = epoch * len(self.train_dataloader) + batch_idx
-    
+                
+                self.writer.add_scalar('Train: Perceptual Loss', perceptual_loss.item(), global_step)
                 self.writer.add_scalar('Train: Reconstruction Loss', recon_loss.item(), global_step)
                 self.writer.add_scalar('Train: Internal Loss', internal_loss.item(), global_step)
                 self.writer.add_scalar('Train: Total Loss', loss.item(), global_step)
@@ -242,9 +249,15 @@ class VAETrainer:
                 self.writer.add_scalar('Train: Discriminator Real Loss', loss_real.item(), global_step)
                 self.writer.add_scalar('Train: Discriminator Loss', d_loss.item(), global_step)
                 ###########################################
+                
+                # Log embeddings for the epoch
+                feature_vector = z.cpu().detach()
+                label_image = x.cpu().detach()
+                self.writer.add_embedding(feature_vector, label_img=label_image, global_step=global_step)
+                
                 self.writer.flush()
-                    
-                    
+            
+
             avg_loss = total_loss / len(self.train_dataloader)
             print_colored(f">>> Epoch [{epoch}] Average Loss: {avg_loss:.4f}", color='blue')
             
@@ -261,7 +274,7 @@ class VAETrainer:
                 x = x.to(self.device)
                 batch_num = x.size(0)
                 x_reconst, z, internal_loss = self.model(x)
-                recon_loss = self.l2loss(x_reconst, x)
+                recon_loss = self.l2_loss(x_reconst, x)
                 loss = recon_loss + internal_loss
                 
                 if epoch > 1:
@@ -286,6 +299,7 @@ if __name__ == '__main__':
     from models.autoencoder.vae import VAE
     from models.autoencoder.vqvae import VQVAE
     from models.autoencoder.discriminator import Discriminator
+    from models.lpips import LPIPS
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
@@ -316,7 +330,7 @@ if __name__ == '__main__':
     discriminator = Discriminator(in_channels=3).to(device) # Assuming Discriminator is modified to take input_channels
     
     # Initialize trainer
-    trainer = VAETrainer(model, dataset, discriminator,
+    trainer = VAETrainer(model, discriminator, lpips,
                          dataset_train=dataset_train,
                         dataset_val=dataset_val,
                         dataset_test=dataset_test,

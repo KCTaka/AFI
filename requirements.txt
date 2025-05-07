@@ -5,3 +5,4 @@ tensorboard
 matplotlib
 kagglehub
 scipy
+torchmetrics

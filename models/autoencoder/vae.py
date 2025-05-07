@@ -71,10 +71,8 @@ class VAE(nn.Module):
     def encode(self, x):
         x = format_input(x)
         x = self.encoder(x)
-        print("Encoder output size:", x.size())
         x_flat = x.view(x.size(0), -1) # Flatten the tensor
         mu, logvar = self.fc_encoder(x_flat).chunk(2, dim=-1) # Split into mu and logvar
-        print("Mu size:", mu.size(), "Logvar size:", logvar.size())
         z = self.reparameterize(mu, logvar)
         return z, mu, logvar
     
@@ -82,7 +80,6 @@ class VAE(nn.Module):
         x = self.fc_decoder(z)
         x = x.view(-1, 1024, 4, 4)
         x = self.decoder(x)
-        print("Decoded output size:", x.size())
         return x
     
     def forward(self, x): # Ensure it outs a list/tuple or multiple outputs

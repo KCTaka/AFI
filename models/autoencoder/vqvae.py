@@ -66,27 +66,17 @@ class VQVAE(nn.Module):
         x = format_input(x)
         # Encoder
         z_e = self.encoder(x)
-        print("z_e size:", z_e.size())
         z_e = self.pre_quant_conv(z_e)
-        print("z_e size after pre_quant_conv:", z_e.size())
         
         B, C, H, W = z_e.size()
         z_e_flat = z_e.permute(0, 2, 3, 1).reshape((B, H*W, C))
-        print("z_e_flat size:", z_e_flat.size())
         
-        print("B:", B, "C:", C, "H:", H, "W:", W)
         distances = torch.cdist(z_e_flat, self.embedding.weight[None, :].repeat(B, 1, 1))
-        print("embedding weight size:", self.embedding.weight.size())
-        print("embedding weight shape2:", self.embedding.weight[None, :].repeat(B, 1, 1).size())
-        print("distances size:", distances.size())
         
         # Find nearest embedding
         z_q_indices = torch.argmin(distances, dim=-1)
-        print("z_q_indices size:", z_q_indices.size())
         z_q = torch.index_select(self.embedding.weight, dim=0, index=z_q_indices.view(-1))
-        print("z_q size:", z_q.size())
         z_e = z_e_flat.reshape((-1, C))
-        print("z_e size after reshape:", z_e.size())
         
         # losses
         commitment_loss = F.mse_loss(z_q.detach(), z_e) 
@@ -95,12 +85,9 @@ class VQVAE(nn.Module):
         
         z_q = z_e + (z_q - z_e).detach()
         z_q = z_q.view(B, H, W, C).permute(0, 3, 1, 2)
-        print("z_q size after permute:", z_q.size())
         
         z_q = self.post_quant_conv(z_q)
         x_reconst = self.decoder(z_q)
-        print('z_q size after post_quant_conv:', z_q.size())
-        print("Reconstructed output size:", x_reconst.size())
         
         return x_reconst, q_loss
     
