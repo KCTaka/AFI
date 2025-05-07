@@ -328,6 +328,7 @@ if __name__ == '__main__':
     vqvae_model = VQVAE(embedding_dim=128, num_embeddings=512).to(device) # Assuming VQVAE is modified to take input_channels
     
     discriminator = Discriminator(in_channels=3).to(device) # Assuming Discriminator is modified to take input_channels
+    lpips = LPIPS(net='vgg').to(device) # Assuming LPIPS is modified to take input_channels
     
     # Initialize trainer
     trainer = VAETrainer(model, discriminator, lpips,
