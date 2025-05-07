@@ -1,7 +1,7 @@
 torch
 numpy
-torch_directml
-models
 torchvision
-multiprocessing
+tensorboard
+matplotlib
+kagglehub
 scipy
