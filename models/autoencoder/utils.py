@@ -7,7 +7,7 @@ def format_input(x):
         raise ValueError(f"Input tensor must be 4D - B, C, H, W. Got {x.shape}")
     return x
 
-def print_colored(text, color='white'):
+def format_colored(text, color='white'):
     colors = {
         'red': '\033[91m',
         'green': '\033[92m',
@@ -18,4 +18,6 @@ def print_colored(text, color='white'):
         'white': '\033[97m',
         'reset': '\033[0m'
     }
-    return f"{colors.get(color, colors['white'])}{text}{colors['reset']}"
+    if color not in colors:
+        return text 
+    return f"{colors[color]}{text}{colors['reset']}"

@@ -86,10 +86,12 @@ class VQVAE(nn.Module):
         z_q = z_e + (z_q - z_e).detach()
         z_q = z_q.view(B, H, W, C).permute(0, 3, 1, 2)
         
+        latent = z_q
+        
         z_q = self.post_quant_conv(z_q)
         x_reconst = self.decoder(z_q)
         
-        return x_reconst, q_loss
+        return x_reconst, latent, q_loss
     
 if __name__ == '__main__':
     import torch_directml 
@@ -97,7 +99,7 @@ if __name__ == '__main__':
     
     vqvae = VQVAE(128, 512).to(device)
     x = torch.randn(32, 3, 128, 128).to(device)
-    x_reconst, q_loss = vqvae(x)
+    x_reconst, latent, q_loss = vqvae(x)
     print(x_reconst.size())
     print(q_loss.size())
     print(q_loss)
