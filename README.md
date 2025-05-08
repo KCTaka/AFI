@@ -48,9 +48,13 @@ The planned workflow is as follows:
 - [x] Initial training set-up for VAE (Variational Autoencoder) and VQ-VAE (Vector Quantized Variational Autoencoder).
 - [x] Integration with TensorBoard for experiment tracking and visualization.
 - [x] Implementation of Adversarial Loss component.
+- [x] Integrate Perceptual Loss (e.g., using VGG16 features).
+
+### In-Progress:
+- [ ] Determine promising hyperparameters for the VAE/VQVAE
 
 ### 📝 To-Do:
-- [ ] Integrate Perceptual Loss (e.g., using VGG16 features).
+
 - [ ] Experiment with U-Net architecture for the core generation task.
 - [ ] Develop and apply methods for dataset filtering and curation.
 - [ ] Implement an advanced discriminator (e.g., "SN-ResNet PatchGAN + SA").

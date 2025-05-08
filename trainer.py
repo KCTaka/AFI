@@ -3,6 +3,7 @@ from tqdm import tqdm
 
 import torch
 from torch import nn, optim
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from torchvision.utils import save_image
@@ -18,28 +19,41 @@ class VAETrainer:
                  dataset_test=None, 
                  dataset_val=None,
                   batch_size=32, 
-                  learning_rate=2e-5, 
+                  model_lr=2e-5, 
+                  disc_lr=1e-5,
                   epochs=10, 
                   save_every=5,
                   num_workers=4,
                   d_start_step=50,
+                  loss_weights={"reconst": 1.0, "internal": 1.0, "perceptual": 1.0, "adversarial": 1.0},
                   run_name="vae_experiment",
                   local_dir_base='./runs/',):
         
         self.model = model
         self.discriminator = discriminator
-        self.lpips = lpips
         self.dataset_train = dataset_train 
         self.dataset_val = dataset_val
         self.dataset_test = dataset_test
         self.batch_size = batch_size
-        self.learning_rate = learning_rate
+        self.model_lr = model_lr
+        self.disc_lr = disc_lr
         self.epochs = epochs
         self.save_every = save_every
         self.run_name = run_name
         
+        loss_names = ["reconst", "internal", "perceptual", "adversarial"]
+        for name in loss_names:
+            if name not in loss_weights:
+                raise ValueError(f"Loss weight for '{name}' is missing. Please provide a value.")
+        self.loss_weights = loss_weights
+        
+        # Determine device from model parameters
+        self.device = next(model.parameters()).device
+        
         self.d_start_step = d_start_step
         self.start_epoch = 0
+        self.mean_tensor = torch.tensor([0.5] * 3, device=self.device).view(1, 3, 1, 1)
+        self.std_tensor = torch.tensor([0.5] * 3, device=self.device).view(1, 3, 1, 1)
         
         
         self.local_dir = os.path.join(local_dir_base, run_name)
@@ -47,21 +61,24 @@ class VAETrainer:
             os.makedirs(self.local_dir)
             tqdm.write(format_colored(f"Created directory: {self.local_dir}", color='blue'))
         
-        # Determine device from model parameters
-        self.device = next(model.parameters()).device
-        
         # DataLoaders
         self.train_dataloader = DataLoader(dataset_train, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
         self.val_dataloader = DataLoader(dataset_val, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True) if dataset_val else None
         self.test_dataloader = DataLoader(dataset_test, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True) if dataset_test else None
         
         # Optimizer
-        self.optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-        self.d_optimizer = optim.Adam(discriminator.parameters(), lr=learning_rate)
+        self.optimizer = optim.Adam(model.parameters(), lr=model_lr)
+        self.d_optimizer = optim.Adam(discriminator.parameters(), lr=disc_lr)
+        
+        # LR Scheduler
+        self.scheduler = ReduceLROnPlateau(self.optimizer, mode='min', factor=0.5, patience=5, verbose=True)
+        self.d_scheduler = ReduceLROnPlateau(self.d_optimizer, mode='min', factor=0.5, patience=5, verbose=True)
+        self.scheduler.step(0)  # Initialize the scheduler with a dummy value
+        self.d_scheduler.step(0)
         
         # Loss functions
         self.l2_loss = nn.MSELoss()
-        self.d_criterion = nn.BCEWithLogitsLoss() # New: Correct for PatchGAN logits output
+        self.d_criterion = nn.BCEWithLogitsLoss() # New: Correct for PatchGAN logits output``
         self.lpips_loss = lpips
         
         # TensorBoard writer
@@ -132,13 +149,11 @@ class VAETrainer:
         return data[0]
     
     def _denormalize_images(self, x):
-        mean_tensor = torch.tensor([0.5] * x.shape[1], device=self.device).view(1, x.shape[1], 1, 1)
-        std_tensor = torch.tensor([0.5] * x.shape[1], device=self.device).view(1, x.shape[1], 1, 1)
-        return x.clone() * std_tensor + mean_tensor
+        return x.clone() * self.std_tensor + self.mean_tensor
             
-    def _compare_images(self):
+    def _compare_images(self, dataloader):
          # Take a random sample from the dataset, compare it with the reconstructed image
-        sample_x_display = self._collect_sample(next(iter(self.train_dataloader)))
+        sample_x_display = self._collect_sample(next(iter(dataloader)))
         sample_x_display = sample_x_display.to(self.device) # Use self.device
         with torch.no_grad():
             reconst_display = self.model(sample_x_display)[0]
@@ -159,34 +174,68 @@ class VAETrainer:
         
         return comparison_orig, comparison_reconst
     
-    def _log_comparison_images(self, orig, reconst, epoch):
+    def _log_comparison_images(self, orig, reconst, epoch, tag="Train"):
         # Log the comparison images to TensorBoard
         num_samples = min(8, orig.size(0))
         img_grid = torch.cat([orig, reconst], dim=0)
         grid_tensor = make_grid(img_grid, nrow=num_samples, normalize=True)
-        self.writer.add_image('Reconstructed Images Comparison', grid_tensor, epoch)
+        self.writer.add_image(f'{tag}/Reconstructed Images Comparison', grid_tensor, epoch)
         tqdm.write(format_colored("Comparison images logged to TensorBoard.", color='blue'))
         
-    def _fit(self, x, global_step):
-        x = x.to(self.device)
-        batch_num = x.size(0)
-        x_reconst, z, internal_loss = self.model(x)
+    def _compute_weighted_losses(self, x, output, global_step, fit=True):
+        x_reconst, z, internal_loss = output
         recon_loss = self.l2_loss(x_reconst, x)
-        perceptual_loss = self.lpips(x_reconst, x)
+        perceptual_loss = self.lpips_loss(x_reconst, x)
         
+        g_adv_loss = torch.tensor(0.0, device=self.device) # Initialize adversarial loss to zero
         if global_step > self.d_start_step:
             # Compute adversarial loss only after the first epoch
             pred_g = self.discriminator(x_reconst)
             label_real_g = torch.ones_like(pred_g).to(self.device)
             g_adv_loss = self.d_criterion(pred_g, label_real_g)
+            
+        # Apply weights to the losses
+        recon_loss = self.loss_weights["reconst"] * recon_loss
+        internal_loss = self.loss_weights["internal"] * internal_loss
+        perceptual_loss = self.loss_weights["perceptual"] * perceptual_loss
+        g_adv_loss = self.loss_weights["adversarial"] * g_adv_loss
         
-        loss = recon_loss + internal_loss + perceptual_loss + g_adv_loss
+        if fit:
+            loss = recon_loss + internal_loss + perceptual_loss + g_adv_loss
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
         
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
+        return recon_loss.item(), internal_loss.item(), perceptual_loss.item(), g_adv_loss.item()
+    
+    def test(self, load_epoch='latest'):
+        if load_epoch is not None:
+            self.load_checkpoint(load_epoch)
         
-        return x_reconst, recon_loss.item(), internal_loss.item(), perceptual_loss.item(), g_adv_loss.item()
+        if self.test_dataloader is None:
+            tqdm.write(format_colored("No test dataset provided. Skipping test phase.", color='yellow'))
+            return
+
+        self.model.eval()
+        total_losses = {'Reconstruct Loss': 0, 'Internal Loss': 0, 'Perceptual Loss': 0, 'Adversarial Loss': 0}
+        with torch.no_grad():
+            for data in self.train_dataloader:
+                x = self._collect_sample(data).to(self.device)
+                output = self.model(x)
+                x_reconst, z, internal_loss = output
+                recon_loss, internal_loss, perceptual_loss, g_adv_loss = self._compute_weighted_losses(x, output, 0, fit=False)
+
+                total_losses['Reconstruct Loss'] += recon_loss
+                total_losses['Internal Loss'] += internal_loss
+                total_losses['Perceptual Loss'] += perceptual_loss
+                total_losses['Adversarial Loss'] += g_adv_loss
+
+        avg_loss = {key: value / len(self.test_dataloader) for key, value in total_losses.items()}
+        tqdm.write(format_colored(f"Test Losses: {avg_loss}", color='blue'))
+        
+        orig, reconst = self._compare_images(self.test_dataloader)
+        self._log_comparison_images(orig, reconst, 0, tag="Test")
+        self.writer.flush()
     
     def train(self, load_epoch='latest'):
         # Log model graph to TensorBoard
@@ -204,15 +253,19 @@ class VAETrainer:
             
         for epoch in tqdm(range(self.start_epoch, self.epochs), desc="Training Progress ", unit="epoch", initial=self.start_epoch, total=self.epochs):
             self.model.train()
-            total_loss = 0
             
             num_batches = len(self.train_dataloader)
             total_losses = {'Reconstruct Loss': 0, 'Internal Loss': 0, 'Perceptual Loss': 0, 'Adversarial Loss': 0}
             for batch_idx, data in tqdm(enumerate(self.train_dataloader), desc="Batch Progress ", unit="batch", total=num_batches, leave=False):
-                global_step = epoch * len(self.train_dataloader) + batch_idx       
-                x = self._collect_sample(data)
-                x_reconst, recon_loss, internal_loss, perceptual_loss, g_adv_loss = self._fit(x, global_step)
-                         
+                global_step = epoch * len(self.train_dataloader) + batch_idx  
+                     
+                x = self._collect_sample(data).to(self.device)
+                batch_num = x.size(0)
+                
+                output = self.model(x)
+                x_reconst, z, internal_loss = output
+                recon_loss, internal_loss, perceptual_loss, g_adv_loss = self._compute_weighted_losses(x, output, global_step, fit=True)
+                
                 self.writer.add_scalars('VAE/Train Losses', {
                     'Reconstruction Loss': recon_loss,
                     'Internal Loss': internal_loss,
@@ -252,36 +305,39 @@ class VAETrainer:
                 self.writer.add_scalar('Discriminator/Real Loss', loss_real, global_step)
                 self.writer.add_scalar('Discriminator/Total Loss', d_loss, global_step)
                 ###########################################
-                
-                # Log embeddings for the epoch
-                feature_vector = z.cpu().detach().reshape(batch_num, -1)
-                label_image = x.cpu().detach()
-                self.writer.add_embedding(feature_vector, label_img=label_image, global_step=global_step)
-                
                 self.writer.flush()
             
             for key, value in total_losses.items():
                 self.writer.add_scalars(f'VAE/{key}', {'Train': value / len(self.train_dataloader)}, epoch)
-            self.writer.add_scalars('VAE/Total Loss', {'Train': (sum(total_losses.values()) / len(self.train_dataloader))}, epoch)
-            
-
-            avg_loss = total_loss / len(self.train_dataloader)
+            avg_loss = sum(total_losses.values()) / len(self.train_dataloader)
+            self.writer.add_scalars('VAE/Total Loss', {'Train': (avg_loss)}, epoch)
             tqdm.write(format_colored(f">>> Epoch [{epoch}] Average Loss: {avg_loss:.4f}", color='blue'))
             
             if epoch % self.save_every == 0:
                 self.save_checkpoint(epoch)
                 
-            orig, reconst = self._compare_images()
+            # Log embeddings for the epoch on Train
+            feature_vector = z.cpu().detach().reshape(batch_num, -1)
+            label_image = x.cpu().detach()
+            self.writer.add_embedding(feature_vector, label_img=label_image, global_step=epoch, tag='VAE/Embeddings-Train_Last_Batch')
+            self.writer.flush()
+                
+            orig, reconst = self._compare_images(self.train_dataloader)
             self._log_comparison_images(orig, reconst, epoch)
             self.writer.flush()
+            
+            if self.val_dataloader is None:
+                continue
             
             self.model.eval()
             total_losses = {'Reconstruct Loss': 0, 'Internal Loss': 0, 'Perceptual Loss': 0, 'Adversarial Loss': 0}
             for batch_idx, data in tqdm(enumerate(self.val_dataloader), desc="Validation Progress ", unit="batch", total=len(self.val_dataloader), leave=False):
-                x = self._collect_sample(data)
+                x = self._collect_sample(data).to(self.device)
                 batch_num = x.size(0)
+                
                 with torch.no_grad():
-                    _, recon_loss, internal_loss, perceptual_loss, g_adv_val_loss = self._fit(x, global_step)
+                    output = self.model(x)
+                    recon_loss, internal_loss, perceptual_loss, g_adv_val_loss = self._compute_weighted_losses(x, output, global_step, fit=False)
                 
                 total_losses['Reconstruct Loss'] += recon_loss
                 total_losses['Internal Loss'] += internal_loss
@@ -294,7 +350,16 @@ class VAETrainer:
             
             for key, value in total_losses.items():
                 self.writer.add_scalars(f'VAE/{key}', {'Validation': value / len(self.val_dataloader)}, epoch)
+            avg_loss = sum(total_losses.values()) / len(self.val_dataloader)
             self.writer.add_scalars('VAE/Total Loss', {'Validation': (sum(total_losses.values()) / len(self.val_dataloader))}, epoch)
+            tqdm.write(format_colored(f">>> Validation - Epoch [{epoch}] Average Loss: {avg_loss:.4f}", color='blue'))
+            
+            # Log embeddings for the epoch
+            x_reconst, z, internal_loss = output # From Last Batch
+            feature_vector = z.cpu().detach().reshape(batch_num, -1)
+            label_image = x.cpu().detach()
+            self.writer.add_embedding(feature_vector, label_img=label_image, global_step=epoch, tag='VAE/Embeddings-Validation_Last_Batch')
+            self.writer.flush()
                 
 if __name__ == '__main__':
     # Define dataset and transformations
@@ -325,6 +390,17 @@ if __name__ == '__main__':
 
     print(f"Loaded dataset with {len(dataset)} images.")
     
+    loss_weights = {
+        "reconst": 1.0,
+        "internal": 1.0,
+        "perceptual": 1.0,
+        "adversarial": 1.0
+    }
+    
+    # loss = weight_r*loss_r + weight_i*loss_i + weight_p*loss_p + weight_g*loss_g
+    # VAE: loss = weight_r*loss_r + weight_i*beta*kld_loss + weight_p*loss_p + weight_g*loss_g
+    # VQVAE: loss = weight_r*loss_r + weight_i*(codebook_loss + beta*commitment_loss) + weight_p*loss_p + weight_g*loss_g
+    
     # Initialize model
     # model = VAE(latent_dim=128).to(device) # Assuming VAE is modified to take input_channels
     model = VQVAE(embedding_dim=1024, num_embeddings=512, beta=0.25).to(device) # Assuming VQVAE is modified to take input_channels
@@ -339,9 +415,11 @@ if __name__ == '__main__':
                         dataset_val=dataset_val,
                         dataset_test=dataset_test,
                          batch_size=64, 
-                         learning_rate=2e-5,
-                         epochs=50, 
-                         save_every=1,
+                         model_lr=2e-5,
+                         epochs=100, 
+                            d_start_step=50,
+                            loss_weights=loss_weights,
+                         save_every=5,
                          run_name="vqvae_experiment_3",
                          )
     
