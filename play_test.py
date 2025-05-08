@@ -92,4 +92,4 @@ def test_resnet_block():
     
         
 if __name__ == '__main__':
-    test_discriminator()
+    test_vae()

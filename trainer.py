@@ -301,15 +301,18 @@ class VAETrainer:
                 d_loss.backward()
                 self.d_optimizer.step()
                 
-                self.writer.add_scalar('Discriminator/Fake Loss', loss_fake, global_step)
-                self.writer.add_scalar('Discriminator/Real Loss', loss_real, global_step)
-                self.writer.add_scalar('Discriminator/Total Loss', d_loss, global_step)
+                self.writer.add_scalar('Discriminator/Fake Loss', loss_fake.item(), global_step)
+                self.writer.add_scalar('Discriminator/Real Loss', loss_real.item(), global_step)
+                self.writer.add_scalar('Discriminator/Total Loss', d_loss.item(), global_step)
                 ###########################################
                 self.writer.flush()
+                
+            avg_loss = sum(total_losses.values()) / len(self.train_dataloader)
+            self.scheduler.step(avg_loss)
+            self.d_scheduler.step(d_loss.item())
             
             for key, value in total_losses.items():
                 self.writer.add_scalars(f'VAE/{key}', {'Train': value / len(self.train_dataloader)}, epoch)
-            avg_loss = sum(total_losses.values()) / len(self.train_dataloader)
             self.writer.add_scalars('VAE/Total Loss', {'Train': (avg_loss)}, epoch)
             tqdm.write(format_colored(f">>> Epoch [{epoch}] Average Loss: {avg_loss:.4f}", color='blue'))
             
@@ -391,8 +394,8 @@ if __name__ == '__main__':
     print(f"Loaded dataset with {len(dataset)} images.")
     
     loss_weights = {
-        "reconst": 1.0,
-        "internal": 1.0,
+        "reconst": 0.5,
+        "internal": 0.5,
         "perceptual": 1.0,
         "adversarial": 1.0
     }
@@ -415,12 +418,12 @@ if __name__ == '__main__':
                         dataset_val=dataset_val,
                         dataset_test=dataset_test,
                          batch_size=64, 
-                         model_lr=2e-5,
+                         model_lr=2e-4,
                          epochs=100, 
-                            d_start_step=50,
-                            loss_weights=loss_weights,
+                        d_start_step=100,
+                        loss_weights=loss_weights,
                          save_every=5,
-                         run_name="vqvae_experiment_3",
+                         run_name="vae_experiment_1",
                          )
     
     # Train the model
