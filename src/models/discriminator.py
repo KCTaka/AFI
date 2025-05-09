@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-from .utils import format_input
+
+from src.utils.helpers import format_input
 
 class Block(nn.Module):
     '''    # Block architecture

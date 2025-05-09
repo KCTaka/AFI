@@ -6,3 +6,5 @@ matplotlib
 kagglehub
 scipy
 torchmetrics
+plotly
+scikit-learn

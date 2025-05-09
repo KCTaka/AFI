@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .utils import format_input # Use relative import for utils as well, assuming it's in the same directory
+from src.utils.helpers import format_input
 
 class ResNetBlock(nn.Module):
     def __init__(self, in_channels, out_channels):

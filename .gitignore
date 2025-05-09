@@ -10,7 +10,4 @@ __pycache__/
 .venv/
 
 # Ignore logs and data directories
-playground
-data/
-datasets/
-runs/
+wandb/*

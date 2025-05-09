@@ -4,7 +4,7 @@ import torch_directml
 
 from models.autoencoder.vqvae import VQVAE
 from models.autoencoder.vae import VAE, ResNetBlock
-from models.autoencoder.discriminator import Discriminator
+from models.discriminator import Discriminator
 
 
 def test_vae():

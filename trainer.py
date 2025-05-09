@@ -11,7 +11,8 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import random_split
 from torchvision.utils import make_grid
 
-from models.autoencoder.utils import format_colored, format_input
+from src.utils.helpers import format_input
+from src.utils.prints import tqdm_write_colored
 
 class VAETrainer:
     def __init__(self, model, discriminator, lpips,
@@ -59,7 +60,7 @@ class VAETrainer:
         self.local_dir = os.path.join(local_dir_base, run_name)
         if not os.path.exists(self.local_dir):
             os.makedirs(self.local_dir)
-            tqdm.write(format_colored(f"Created directory: {self.local_dir}", color='blue'))
+            tqdm_write_colored(f"Created directory: {self.local_dir}", color='blue')
         
         # DataLoaders
         self.train_dataloader = DataLoader(dataset_train, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
@@ -71,8 +72,8 @@ class VAETrainer:
         self.d_optimizer = optim.Adam(discriminator.parameters(), lr=disc_lr)
         
         # LR Scheduler
-        self.scheduler = ReduceLROnPlateau(self.optimizer, mode='min', factor=0.5, patience=5, verbose=True)
-        self.d_scheduler = ReduceLROnPlateau(self.d_optimizer, mode='min', factor=0.5, patience=5, verbose=True)
+        self.scheduler = ReduceLROnPlateau(self.optimizer, mode='min', factor=0.5, patience=5)
+        self.d_scheduler = ReduceLROnPlateau(self.d_optimizer, mode='min', factor=0.5, patience=5)
         self.scheduler.step(0)  # Initialize the scheduler with a dummy value
         self.d_scheduler.step(0)
         
@@ -93,7 +94,7 @@ class VAETrainer:
             os.makedirs("checkpoints")
         if not os.path.exists(checkpoint_dir):
             os.makedirs(checkpoint_dir)
-            tqdm.write(format_colored(f"Created checkpoint directory: {checkpoint_dir}", color='blue'))
+            tqdm_write_colored(f"Created checkpoint directory: {checkpoint_dir}", color='blue')
             
         checkpoint_name = os.path.join(checkpoint_dir, f"checkpoint_epoch_{epoch}.pth")
         checkpoint = {
@@ -105,7 +106,7 @@ class VAETrainer:
         }
         
         torch.save(checkpoint, checkpoint_name)
-        tqdm.write(format_colored(f"Checkpoint saved at {checkpoint_name}", color='blue'))
+        tqdm_write_colored(f"Checkpoint saved at {checkpoint_name}", color='blue')
         
     def _find_checkpoint(self, load_epoch="latest"):
         # if checkpoint_epoch is None, find the latest checkpoint (largest epoch number)
@@ -133,7 +134,7 @@ class VAETrainer:
         # if checkpoint_epoch is None, find the latest checkpoint (largest epoch number)
         checkpoint_path = self._find_checkpoint(load_epoch)
         if checkpoint_path is None:
-            tqdm.write(format_colored("No checkpoint found. Starting from scratch.", color='red'))
+            tqdm_write_colored("No checkpoint found. Starting from scratch.", color='red')
             return
         
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
@@ -143,7 +144,7 @@ class VAETrainer:
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         self.d_optimizer.load_state_dict(checkpoint['d_optimizer_state_dict'])
         
-        tqdm.write(format_colored(f"Checkpoint loaded from {checkpoint_path}", color='blue'))
+        tqdm_write_colored(f"Checkpoint loaded from {checkpoint_path}", color='blue')
         
     def _collect_sample(self, data):    
         return data[0]
@@ -180,7 +181,7 @@ class VAETrainer:
         img_grid = torch.cat([orig, reconst], dim=0)
         grid_tensor = make_grid(img_grid, nrow=num_samples, normalize=True)
         self.writer.add_image(f'{tag}/Reconstructed Images Comparison', grid_tensor, epoch)
-        tqdm.write(format_colored("Comparison images logged to TensorBoard.", color='blue'))
+        tqdm_write_colored("Comparison images logged to TensorBoard.", color='blue')
         
     def _compute_weighted_losses(self, x, output, global_step, fit=True):
         x_reconst, z, internal_loss = output
@@ -213,7 +214,7 @@ class VAETrainer:
             self.load_checkpoint(load_epoch)
         
         if self.test_dataloader is None:
-            tqdm.write(format_colored("No test dataset provided. Skipping test phase.", color='yellow'))
+            tqdm_write_colored("No test dataset provided. Skipping test phase.", color='yellow')
             return
 
         self.model.eval()
@@ -231,7 +232,7 @@ class VAETrainer:
                 total_losses['Adversarial Loss'] += g_adv_loss
 
         avg_loss = {key: value / len(self.test_dataloader) for key, value in total_losses.items()}
-        tqdm.write(format_colored(f"Test Losses: {avg_loss}", color='blue'))
+        tqdm_write_colored(f"Test Losses: {avg_loss}", color='blue')
         
         orig, reconst = self._compare_images(self.test_dataloader)
         self._log_comparison_images(orig, reconst, 0, tag="Test")
@@ -244,9 +245,9 @@ class VAETrainer:
             sample_images = self._collect_sample(next(data_iter))
             sample_images = sample_images.to(self.device)
             self.writer.add_graph(self.model, sample_images)
-            tqdm.write(format_colored("Model graph added to TensorBoard.", color='blue'))
+            tqdm_write_colored("Model graph added to TensorBoard.", color='blue')
         except Exception as e:
-            tqdm.write(format_colored(f"Could not add model graph to TensorBoard: {e}", color='yellow'))
+            tqdm_write_colored(f"Could not add model graph to TensorBoard: {e}", color='yellow')
             
         if load_epoch is not None:
             self.load_checkpoint(load_epoch)
@@ -280,8 +281,8 @@ class VAETrainer:
                 
                 if batch_idx % 10 == 0:
                     loss = recon_loss + internal_loss + perceptual_loss + g_adv_loss
-                    tqdm.write(format_colored(f"Epoch [{epoch}/{self.epochs}] |\tStep [{batch_idx}/{len(self.train_dataloader)}] |\t\
-                        Total Loss: {loss:.4f} |", color='green'))
+                    tqdm_write_colored(f"Epoch [{epoch}/{self.epochs}] |\tStep [{batch_idx}/{len(self.train_dataloader)}] |\t\
+                        Total Loss: {loss:.4f} |", color='green')
 
                 ########## Update Discriminator ##########
                 fake_images = x_reconst.detach()
@@ -314,7 +315,7 @@ class VAETrainer:
             for key, value in total_losses.items():
                 self.writer.add_scalars(f'VAE/{key}', {'Train': value / len(self.train_dataloader)}, epoch)
             self.writer.add_scalars('VAE/Total Loss', {'Train': (avg_loss)}, epoch)
-            tqdm.write(format_colored(f">>> Epoch [{epoch}] Average Loss: {avg_loss:.4f}", color='blue'))
+            tqdm_write_colored(f">>> Epoch [{epoch}] Average Loss: {avg_loss:.4f}", color='blue')
             
             if epoch % self.save_every == 0:
                 self.save_checkpoint(epoch)
@@ -349,13 +350,13 @@ class VAETrainer:
                 
                 if batch_idx % 10 == 0:
                     loss = recon_loss + internal_loss + perceptual_loss + g_adv_val_loss
-                    tqdm.write(format_colored(f"Validation - Epoch [{epoch}/{self.epochs}] | Batch [{batch_idx}/{len(self.val_dataloader)}] | Total Loss: {loss:.4f}", color='blue'))
+                    tqdm_write_colored(f"Validation - Epoch [{epoch}/{self.epochs}] | Batch [{batch_idx}/{len(self.val_dataloader)}] | Total Loss: {loss:.4f}", color='blue')
             
             for key, value in total_losses.items():
                 self.writer.add_scalars(f'VAE/{key}', {'Validation': value / len(self.val_dataloader)}, epoch)
             avg_loss = sum(total_losses.values()) / len(self.val_dataloader)
             self.writer.add_scalars('VAE/Total Loss', {'Validation': (sum(total_losses.values()) / len(self.val_dataloader))}, epoch)
-            tqdm.write(format_colored(f">>> Validation - Epoch [{epoch}] Average Loss: {avg_loss:.4f}", color='blue'))
+            tqdm_write_colored(f">>> Validation - Epoch [{epoch}] Average Loss: {avg_loss:.4f}", color='blue')
             
             # Log embeddings for the epoch
             x_reconst, z, internal_loss = output # From Last Batch
@@ -368,7 +369,7 @@ if __name__ == '__main__':
     # Define dataset and transformations
     from models.autoencoder.vae import VAE
     from models.autoencoder.vqvae import VQVAE
-    from models.autoencoder.discriminator import Discriminator
+    from models.discriminator import Discriminator
     from models.lpips import LPIPS
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -378,7 +379,7 @@ if __name__ == '__main__':
     # Download latest version
     path = kagglehub.dataset_download("badasstechie/celebahq-resized-256x256")  
     
-    tqdm.write(format_colored(f"Dataset downloaded to {path}", color='blue'))
+    tqdm_write_colored(f"Dataset downloaded to {path}", color='blue')
     
         
     transform = transforms.Compose([
