@@ -24,12 +24,15 @@ class KaggleImageDataModule(LightningDataModule):
                  pin_memory=True):
         super().__init__()
         self.save_hyperparameters()
+        
+        # For badasstechie/celebahq-resized-256x256
+        # mean: (tensor([ 0.0352, -0.1657, -0.2721]) + 1)*.5, 
+        # std: tensor([0.5969, 0.5393, 0.5294])*.5
 
         self.transforms = transforms.Compose([
             transforms.Resize(self.hparams.image_size),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
-            # If channels=1, consider adding transforms.Grayscale(num_output_channels=1) before ToTensor
+            transforms.Lambda(lambda x: 2 * x - 1),  # Scale to [-1, 1]
         ])
 
         self.data_train: Optional[Dataset] = None
@@ -63,7 +66,7 @@ class KaggleImageDataModule(LightningDataModule):
             # Assuming self.dataset_path is the root directory for ImageFolder
             # If your dataset is not structured for ImageFolder, you'll need a custom Dataset
             try:
-                full_dataset = datasets.ImageFolder(root=self.dataset_path, transform=self.transforms)
+                self.dataset = datasets.ImageFolder(root=self.dataset_path, transform=self.transforms)
             except FileNotFoundError:
                 raise FileNotFoundError(
                     f"Dataset not found at path: {self.dataset_path}. "
@@ -71,38 +74,8 @@ class KaggleImageDataModule(LightningDataModule):
                     "and that it's structured for torchvision.datasets.ImageFolder."
                 )
             
-            total_data = len(full_dataset)
-            if sum(self.hparams.train_val_test_split) > total_data:
-                # Adjust split if requested size is larger than available data
-                print(f"Warning: Requested split {self.hparams.train_val_test_split} (total {sum(self.hparams.train_val_test_split)}) "
-                      f"is larger than dataset size {total_data}. Using all available data for splits proportionally.")
-                
-                train_len, val_len, test_len = self.hparams.train_val_test_split
-                total_requested = sum(self.hparams.train_val_test_split)
-
-                # Proportional split based on available data
-                train_len = int((train_len / total_requested) * total_data)
-                val_len = int((val_len / total_requested) * total_data)
-                # Assign remaining to test to ensure sum matches total_data
-                test_len = total_data - train_len - val_len 
-                
-                current_splits = (train_len, val_len, test_len)
-            else:
-                current_splits = self.hparams.train_val_test_split
-                # If there's leftover data not covered by the split, it will be ignored by random_split
-                # Ensure sum of splits does not exceed total_data if you want to use all data
-                if sum(current_splits) < total_data:
-                    print(f"Warning: Sum of splits {sum(current_splits)} is less than total dataset size {total_data}. "
-                          f"{total_data - sum(current_splits)} samples will be unused.")
-                elif sum(current_splits) > total_data: # Should be caught by above, but as safeguard
-                     raise ValueError(f"Sum of splits {sum(current_splits)} exceeds dataset size {total_data} after potential adjustment.")
-
-
-            self.data_train, self.data_val, self.data_test = random_split(
-                dataset=full_dataset,
-                lengths=list(current_splits), # random_split expects a list or tuple of ints
-                generator=torch.Generator().manual_seed(42) # for reproducibility
-            )
+            current_splits = self.hparams.train_val_test_split
+            self.data_train, self.data_val, self.data_test = random_split(dataset=self.dataset, lengths=current_splits)
     
     def train_dataloader(self):
         if not self.data_train:
@@ -136,3 +109,26 @@ class KaggleImageDataModule(LightningDataModule):
             pin_memory=self.hparams.pin_memory,
             shuffle=False,
         )
+        
+if __name__ == "__main__":
+    # Example usage
+    kaggle_dataset_path = "badasstechie/celebahq-resized-256x256"  # Replace with your actual dataset path
+    datamodule = KaggleImageDataModule(
+        kaggle_dataset_path=kaggle_dataset_path,
+        channels=3,
+        image_size=(128, 128),
+        train_val_test_split=(0.70, 0.15, 0.15),  # 70% train, 15% val, 15% test
+        batch_size=10,
+        num_workers=4,
+        pin_memory=True,
+    )
+    datamodule.prepare_data()
+    datamodule.setup()
+    
+    test_dataloader = datamodule.test_dataloader()
+    batch = next(iter(test_dataloader))[0]
+    print(f"Batch size: {batch.size()}")
+    print(f"Batch min: {batch.min()}")
+    print(f"Batch max: {batch.max()}")
+    
+    
