@@ -8,3 +8,5 @@ scipy
 torchmetrics
 plotly
 scikit-learn
+lightning
+wandb
