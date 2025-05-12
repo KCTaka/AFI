@@ -54,7 +54,7 @@ wandb_logger = WandbLogger(
 trainer = Trainer(
     max_epochs=50,
     accelerator="auto",
-    devices=1,
+    devices="auto",
     logger=wandb_logger,
     log_every_n_steps=1,
 )

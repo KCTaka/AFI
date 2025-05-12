@@ -167,7 +167,7 @@ class AutoEncoder(pl.LightningModule):
             x_reconst, _, _ = self._forward(x)
         self.train()
         
-        self._log_comparison_images("Validation", x, x_reconst)
+        self._log_comparison_images("Validation", x, x_reconst, epoch=self.current_epoch)
         
     def test_step(self, batch, batch_idx):
         x = self.get_images(batch)
@@ -187,5 +187,5 @@ class AutoEncoder(pl.LightningModule):
             x_reconst, _, _ = self._forward(x)
         self.train()
         
-        self._log_comparison_images("Test", x, x_reconst)
+        self._log_comparison_images("Test", x, x_reconst, epoch=self.current_epoch)
         
