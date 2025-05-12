@@ -1,24 +1,24 @@
 # Animation Frame Interpolation (AFI) Project
 
-## 🚀 Overview
+## Overview
 
 This project aims to develop a high-quality frame interpolation model specifically tailored for animation and cartoon-style videos. The primary objective is to enhance video fluidity by increasing frames per second (FPS) while meticulously preserving the original motion dynamics and artistic nuances. This is a solo endeavor by an engineering student, focusing on practical application and learning within a resource-constrained environment.
 
-## 🎯 Project Goal
+## Project Goal
 
 To create a robust deep learning model capable of:
 *   Interpolating frames in video clips of animations/cartoons.
 *   Maintaining high visual fidelity and consistency of motion.
 *   Operating under the assumption of no scene cuts within processed video segments.
 
-## 🛠️ Methodology
+## Methodology
 
 The planned workflow is as follows:
 1.  **Video Preprocessing:** Segment videos into clips, ensuring each clip does not contain scene cuts.
 2.  **Frame Generation:** Utilize a deep learning model to generate intermediate frames for each clip, effectively increasing its FPS.
 3.  **Video Postprocessing:** Reassemble the processed clips to form the final high-frame-rate video.
 
-## 💻 Technical Stack & Constraints
+## Technical Stack & Constraints
 
 ### Core Technologies:
 *   **Programming Language:** Python
@@ -29,7 +29,7 @@ The planned workflow is as follows:
 *   **Hardware:** Limited local disk space; no dedicated CUDA-enabled GPU.
 *   **Budget:** Project budget is capped at $200.
 
-## 🧠 Current Skills & Learning Focus
+## Current Skills & Learning Focus
 
 ### Current Proficiencies:
 *   Solid understanding of Machine Learning and Deep Learning fundamentals, including underlying mathematics.
@@ -42,9 +42,9 @@ The planned workflow is as follows:
 *   Exploring tools and best practices for efficient model development and experimentation.
 *   Techniques for creating and managing large-scale datasets.
 
-## 📊 Project Status
+## Project Status
 
-### ✅ Completed:
+### Completed:
 - [x] Initial training set-up for VAE (Variational Autoencoder) and VQ-VAE (Vector Quantized Variational Autoencoder).
 - [x] Integration with TensorBoard for experiment tracking and visualization.
 - [x] Implementation of Adversarial Loss component.
@@ -53,7 +53,7 @@ The planned workflow is as follows:
 ### In-Progress:
 - [ ] Determine promising hyperparameters for the VAE/VQVAE
 
-### 📝 To-Do:
+### To-Do:
 
 - [ ] Experiment with U-Net architecture for the core generation task.
 - [ ] Develop and apply methods for dataset filtering and curation.
@@ -65,7 +65,7 @@ The planned workflow is as follows:
 - [ ] Further scale up and refine training for 512x128 resolution.
 - [ ] Implement and optimize for large-scale training with the full 512x512 target resolution.
 
-## 📚 Concepts to Explore & Learn
+## Concepts to Explore & Learn
 
 To enhance this project and personal skill set, the following concepts are targeted for learning and potential integration:
 

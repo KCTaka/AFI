@@ -24,6 +24,7 @@ class KaggleImageDataModule(LightningDataModule):
                  pin_memory=True):
         super().__init__()
         self.save_hyperparameters()
+        self.dataset_path: Optional[str] = None  # Initialize dataset_path
         
         # For badasstechie/celebahq-resized-256x256
         # mean: (tensor([ 0.0352, -0.1657, -0.2721]) + 1)*.5, 
@@ -65,6 +66,9 @@ class KaggleImageDataModule(LightningDataModule):
         if not self.data_train and not self.data_val and not self.data_test:
             # Assuming self.dataset_path is the root directory for ImageFolder
             # If your dataset is not structured for ImageFolder, you'll need a custom Dataset
+            if self.dataset_path is None:
+                self.dataset_path = kagglehub.dataset_download(self.hparams.kaggle_dataset_path)
+                
             try:
                 self.dataset = datasets.ImageFolder(root=self.dataset_path, transform=self.transforms)
             except FileNotFoundError:
@@ -130,5 +134,4 @@ if __name__ == "__main__":
     print(f"Batch size: {batch.size()}")
     print(f"Batch min: {batch.min()}")
     print(f"Batch max: {batch.max()}")
-    
-    
+
