@@ -7,13 +7,14 @@ from pytorch_lightning.strategies import DDPStrategy
 from pytorch_lightning.callbacks import ModelCheckpoint # Added import
 from src.systems.autoencoder import AutoEncoder
 from src.models.vae import VAE
+from src.models.vqvae import VQVAE
 from src.models.discriminator import Discriminator
 from src.models.lpips import LPIPS
 from src.data.kaggle_image_datamodule import KaggleImageDataModule
 
-model_ae = VAE(
-    latent_dim=1024,
-    beta = 1,
+model_ae = VQVAE(
+    embedding_dim=128,
+    num_embeddings=512,
 )
 
 model_d = Discriminator(
@@ -42,14 +43,9 @@ kaggle_datamodule = KaggleImageDataModule(
     channels=3,
     image_size=(128, 128),
     train_val_test_split=(0.70, 0.15, 0.15),  # 70% train, 15% val, 15% test
-    batch_size=128,
+    batch_size=50*3,
     num_workers=4,
     pin_memory=True,
-)
-
-wandb_logger = WandbLogger(
-    project="Anime Auto Encoder",
-    name="kaggle_dataset_vae_test_run",
 )
 
 # Checkpoint callback for saving the last 5 models
@@ -68,6 +64,11 @@ checkpoint_callback_best_val_loss = ModelCheckpoint(
     save_top_k=3,
     filename='model-epoch{epoch:02d}-val_loss{Validation/Loss-weighted-average:.2f}',
     dirpath='checkpoints/best_val_loss_models/'
+)
+
+wandb_logger = WandbLogger(
+    project="Anime Auto Encoder",
+    name="kaggle_dataset_vqvae_test_run",
 )
 
 trainer = Trainer(

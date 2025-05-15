@@ -17,7 +17,7 @@ class Block(nn.Module):
         self.bn2 = nn.BatchNorm2d(out_channels)
         # Skip connection for channel dimension matching
         self.skip_conv = nn.Conv2d(in_channels, out_channels, kernel_size=1) if in_channels != out_channels and skip else None
-        self.activation = nn.SiLU()
+        self.activation = nn.LeakyReLU(0.2)
         
         self.skip = skip
     
