@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader, random_split
 from torchvision import datasets, transforms
-from pytorch_lightning import LightningDataModule
+from lightning.pytorch import LightningDataModule
 
 import kagglehub
 

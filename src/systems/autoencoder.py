@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torchvision.utils import make_grid
-import pytorch_lightning as pl
+import lightning.pytorch as pl
 
 import wandb
 

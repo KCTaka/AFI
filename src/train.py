@@ -1,10 +1,11 @@
 import autoroot
 import autorootcwd
 
+import torch
 from lightning.pytorch.loggers import WandbLogger
-from pytorch_lightning import Trainer
-from pytorch_lightning.strategies import DDPStrategy
-from pytorch_lightning.callbacks import ModelCheckpoint # Added import
+from lightning.pytorch import Trainer
+from lightning.pytorch.strategies import DDPStrategy
+from lightning.pytorch.callbacks import ModelCheckpoint # Added import
 from src.systems.autoencoder import AutoEncoder
 from src.models.vae import VAE
 from src.models.vqvae import VQVAE
