@@ -1,1 +1,1 @@
-__target__: src.models.lpips.LPIPS
+_target_: src.models.lpips.LPIPS

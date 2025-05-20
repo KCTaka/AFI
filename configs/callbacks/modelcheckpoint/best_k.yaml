@@ -1,4 +1,4 @@
-__target__: lightning.pytorch.callbacks.ModelCheckpoint
+_target_: lightning.pytorch.callbacks.ModelCheckpoint
 monitor: "Validation/Loss-weighted-average"
 mode: "min"
 save_top_k: 3

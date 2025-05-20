@@ -184,10 +184,10 @@ class AutoEncoder(pl.LightningModule):
             x_reconst, latent, _ = self._forward(x)
         self.train()
         
-        if self.trainer.running_sanity_check:
+        if self.trainer.state.stage == "sanity_check":
             return
         
-        latent_images = convert_to_target_visible_channels(latent, target_channels=3)
+        latent_images = convert_to_target_visible_channels(latent, target_channels=3, resize=(x.shape[2], x.shape[3]))
         self._log_comparison_images("Validation", x, x_reconst, self.current_epoch, 
                                     latent_images=latent_images, n_samples=n_samples)
         
@@ -214,9 +214,9 @@ class AutoEncoder(pl.LightningModule):
             x_reconst, latent, _ = self._forward(x)
         self.train()
         
-        if self.trainer.running_sanity_check:
+        if self.trainer.state.stage == "sanity_check":
             return
         
-        latent_images = convert_to_target_visible_channels(latent, target_channels=3)
+        latent_images = convert_to_target_visible_channels(latent, target_channels=3, resize=(x.shape[2], x.shape[3]))
         self._log_comparison_images("Test", x, x_reconst, self.current_epoch, 
                                     latent_images=latent_images, n_samples=n_samples)

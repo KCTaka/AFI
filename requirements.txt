@@ -12,3 +12,5 @@ lightning
 wandb
 autoroot
 autorootcwd
+hydra-core
+mypy

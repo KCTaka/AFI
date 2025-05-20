@@ -1,4 +1,4 @@
-__target__: src.models.vqvae.VQVAE
+_target_: src.models.vqvae.VQVAE
 embedding_dim: 4
 num_embeddings: 8192
 beta: 0.25

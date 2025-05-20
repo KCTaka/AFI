@@ -1,4 +1,4 @@
-__target__: src.systems.autoencoder.AutoEncoder
+_target_: src.systems.autoencoder.AutoEncoder
 model_ae: ${models.vqvae}
 model_d: ${models.discriminator}
 lpips: ${models.lpips}

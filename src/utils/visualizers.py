@@ -41,6 +41,7 @@ def convert_to_target_visible_channels(latent_image: torch.Tensor, target_channe
 
     if C == target_channels:
         # print(f"Input images already have {target_channels} channels. No conversion needed.")
+        latent_image = torch.nn.functional.interpolate(latent_image, size=resize, mode='bilinear', align_corners=False) if resize is not None else latent_image
         return latent_image
     elif C == 0:
         raise ValueError("Input tensor has 0 channels.")
@@ -48,12 +49,15 @@ def convert_to_target_visible_channels(latent_image: torch.Tensor, target_channe
         # print(f"Input images have {C} channels, target is {target_channels}.")
         if C == 1:
             # print(f"Repeating single channel to create {target_channels} channels.")
+            latent_image = torch.nn.functional.interpolate(latent_image, size=resize, mode='bilinear', align_corners=False) if resize is not None else latent_image
             return latent_image.repeat(1, target_channels, 1, 1)
         else: # C > 1 and C < target_channels (e.g., C=2, target_channels=3 when C_original=2)
             # print(f"Padding with {target_channels - C} zero channels.")
             num_channels_to_add = target_channels - C
             padding_channels = torch.zeros(B, num_channels_to_add, H, W, device=device, dtype=dtype)
-            return torch.cat((latent_image, padding_channels), dim=1)
+            latent_image = torch.cat((latent_image, padding_channels), dim=1)
+            latent_image = torch.nn.functional.interpolate(latent_image, size=resize, mode='bilinear', align_corners=False) if resize is not None else latent_image
+            return latent_image
     else: # C > target_channels
         # print(f"Input images have {C} channels. Applying PCA to reduce to {target_channels} channels.")
 
@@ -123,7 +127,7 @@ if __name__ == "__main__":
 
     # Case 1: C > target_channels (e.g., 128 -> 3)
     latent_images_128 = torch.randn(B, 128, H, W)
-    visible_128_to_3 = convert_to_target_visible_channels(latent_images_128, target_channels=3)
+    visible_128_to_3 = convert_to_target_visible_channels(latent_images_128, target_channels=3, resize=(128, 128))
     print(f"Original shape: {latent_images_128.shape}, Converted shape: {visible_128_to_3.shape}")
     # Expected: Original shape: torch.Size([2, 128, 32, 32]), Converted shape: torch.Size([2, 3, 32, 32])
 
@@ -145,7 +149,7 @@ if __name__ == "__main__":
 
     # Case 4: 1 < C < target_channels (e.g., 2 -> 3)
     latent_images_2 = torch.randn(B, 2, H, W)
-    visible_2_to_3 = convert_to_target_visible_channels(latent_images_2, target_channels=3)
+    visible_2_to_3 = convert_to_target_visible_channels(latent_images_2, target_channels=3, resize=(128, 128))
     print(f"Original shape: {latent_images_2.shape}, Converted shape: {visible_2_to_3.shape}")
     # Check if last channel is zeros:
     # print(torch.all(visible_2_to_3[:, 2, :, :] == 0))
