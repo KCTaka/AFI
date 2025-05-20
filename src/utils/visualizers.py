@@ -1,6 +1,6 @@
 import torch
 
-def convert_to_target_visible_channels(latent_image: torch.Tensor, target_channels: int = 3, resize=None) -> torch.Tensor:
+def convert_to_target_visible_channels(latent_image: torch.Tensor, target_channels: int = 3, resize=None, mode='nearest') -> torch.Tensor:
     """
     Converts a batch of images to a target number of channels, suitable for viewing (typically 3).
 
@@ -41,7 +41,7 @@ def convert_to_target_visible_channels(latent_image: torch.Tensor, target_channe
 
     if C == target_channels:
         # print(f"Input images already have {target_channels} channels. No conversion needed.")
-        latent_image = torch.nn.functional.interpolate(latent_image, size=resize, mode='bilinear', align_corners=False) if resize is not None else latent_image
+        latent_image = torch.nn.functional.interpolate(latent_image, size=resize, mode=mode, align_corners=False) if resize is not None else latent_image
         return latent_image
     elif C == 0:
         raise ValueError("Input tensor has 0 channels.")
@@ -49,14 +49,14 @@ def convert_to_target_visible_channels(latent_image: torch.Tensor, target_channe
         # print(f"Input images have {C} channels, target is {target_channels}.")
         if C == 1:
             # print(f"Repeating single channel to create {target_channels} channels.")
-            latent_image = torch.nn.functional.interpolate(latent_image, size=resize, mode='bilinear', align_corners=False) if resize is not None else latent_image
+            latent_image = torch.nn.functional.interpolate(latent_image, size=resize, mode=mode, align_corners=False) if resize is not None else latent_image
             return latent_image.repeat(1, target_channels, 1, 1)
         else: # C > 1 and C < target_channels (e.g., C=2, target_channels=3 when C_original=2)
             # print(f"Padding with {target_channels - C} zero channels.")
             num_channels_to_add = target_channels - C
             padding_channels = torch.zeros(B, num_channels_to_add, H, W, device=device, dtype=dtype)
             latent_image = torch.cat((latent_image, padding_channels), dim=1)
-            latent_image = torch.nn.functional.interpolate(latent_image, size=resize, mode='bilinear', align_corners=False) if resize is not None else latent_image
+            latent_image = torch.nn.functional.interpolate(latent_image, size=resize, mode=mode, align_corners=False) if resize is not None else latent_image
             return latent_image
     else: # C > target_channels
         # print(f"Input images have {C} channels. Applying PCA to reduce to {target_channels} channels.")
@@ -114,7 +114,7 @@ def convert_to_target_visible_channels(latent_image: torch.Tensor, target_channe
         # Resize if needed
         if resize is not None:
             # Assuming resize is a tuple (new_height, new_width)
-            output_images = torch.nn.functional.interpolate(output_images, size=resize, mode='bilinear', align_corners=False)
+            output_images = torch.nn.functional.interpolate(output_images, size=resize, mode=mode, align_corners=False)
 
         return output_images
     

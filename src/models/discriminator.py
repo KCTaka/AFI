@@ -4,7 +4,7 @@ import autorootcwd
 import torch
 import torch.nn as nn
 
-from utils.formats import format_input
+from src.utils.formats import format_input
 
 class Discriminator(nn.Module):
     def __init__(self, in_channels=3,
@@ -38,6 +38,7 @@ if __name__ == "__main__":
     model = Discriminator()
     output = model(x)
     print(output.shape)  # Should be (4, 1, 8, 8) for the given input size
+    print(model)
     
         
 

@@ -6,12 +6,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from src.models.blocks import DownBlock, MidBlock, UpBlock
-from utils.formats import format_input
+from src.utils.formats import format_input
 
 
 
 class Encoder(nn.Module):
     def __init__(self, in_channels, 
+                 latent_dim = 4,
                  down_channels = [64, 128, 256, 256],
                  mid_channels = [256, 256],
                  downsamples = [True, True, True], 
@@ -42,6 +43,12 @@ class Encoder(nn.Module):
                     num_heads=num_heads, num_layers=num_mid_layers
                 )
             )
+            
+        self.out_block = nn.Sequential(
+            nn.BatchNorm2d(mid_channels[-1]),
+            nn.SiLU(),
+            nn.Conv2d(mid_channels[-1], latent_dim, kernel_size=3, padding=1),
+        )
 
     def forward(self, x):
         x = format_input(x)
@@ -50,12 +57,14 @@ class Encoder(nn.Module):
             x = block(x)
         for block in self.mid_blocks:
             x = block(x)
+        x = self.out_block(x)
         return x
 
 
 # Add sigmoid activation to the Decoder class
 class Decoder(nn.Module):
     def __init__(self, im_channels, 
+                 latent_dim = 4,
                  up_channels = [256, 256, 128, 64],
                  mid_channels = [256, 256],
                  upsamples = [True, True, True],
@@ -65,6 +74,8 @@ class Decoder(nn.Module):
                  num_mid_layers = 2):
 
         super(Decoder, self).__init__()
+        
+        self.conv_in = nn.Conv2d(latent_dim, up_channels[0], kernel_size=3, padding=1)
         
         self.mid_blocks = nn.ModuleList()
         for i in range(len(mid_channels)-1):
@@ -86,13 +97,14 @@ class Decoder(nn.Module):
             )
         
         self.out_model = nn.Sequential(
-            nn.Conv2d(up_channels[-1], im_channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(im_channels),
+            nn.BatchNorm2d(up_channels[-1]),
             nn.SiLU(),
+            nn.Conv2d(up_channels[-1], im_channels, kernel_size=3, padding=1),
         )
         
     def forward(self, x):
         x = format_input(x)
+        x = self.conv_in(x)
         for block in self.mid_blocks:
             x = block(x)
         for block in self.up_blocks:
@@ -118,6 +130,7 @@ class VQVAE(nn.Module):
         
         super(VQVAE, self).__init__()
         self.encoder = Encoder(in_channels=im_channels,
+                                latent_dim=embedding_dim,
                                 down_channels=down_channels,
                                 mid_channels=mid_channels,
                                 downsamples=downsamples,
@@ -127,6 +140,7 @@ class VQVAE(nn.Module):
                                 num_mid_layers=num_mid_layers)
         
         self.decoder = Decoder(im_channels=im_channels,
+                                latent_dim=embedding_dim,
                                 up_channels=down_channels[::-1],
                                 mid_channels=mid_channels[::-1],
                                 upsamples=downsamples[::-1],
@@ -134,9 +148,9 @@ class VQVAE(nn.Module):
                                 num_heads=num_heads,
                                 num_up_layers=num_up_layers)
 
-        self.pre_quant_conv = nn.Conv2d(down_channels[-1], embedding_dim, kernel_size=1)
+        self.pre_quant_conv = nn.Conv2d(embedding_dim, embedding_dim, kernel_size=1)
         self.embedding = nn.Embedding(num_embeddings, embedding_dim)
-        self.post_quant_conv = nn.Conv2d(embedding_dim, down_channels[-1], kernel_size=1)
+        self.post_quant_conv = nn.Conv2d(embedding_dim, embedding_dim, kernel_size=1)
         
         self.beta = beta
         
@@ -176,9 +190,23 @@ if __name__ == '__main__':
     device = torch_directml.device()
     
     from matplotlib import pyplot as plt
-    from utils.visualizers import convert_to_target_visible_channels
+    from src.utils.visualizers import convert_to_target_visible_channels
     
-    vqvae = VQVAE(128, 512).to(device)
+    vqvae = VQVAE(
+        embedding_dim=4,
+        num_embeddings=8192,
+        beta=0.25,
+        im_channels=3,
+        down_channels=[64, 128, 256, 256],
+        mid_channels=[256, 256],
+        downsamples=[True, True, True],
+        down_attn=[False, False, False],
+        num_heads=4,
+        num_down_layers=2,
+        num_mid_layers=2,
+        num_up_layers=2,
+    ).to(device)
+    
     x = torch.randn(8, 3, 128, 128).to(device)
     x_reconst, latent, q_loss = vqvae(x)
     
@@ -198,3 +226,4 @@ if __name__ == '__main__':
     print(q_loss)
     print(q_loss.item())
     print(q_loss.item() / x.size(0))
+    print(vqvae)

@@ -98,7 +98,7 @@ class AutoEncoder(pl.LightningModule):
         compare_images = [x[:n_samples], x_reconst[:n_samples]]
 
         if latent_images is not None:
-            compare_images.append(latent_images[:n_samples])
+            compare_images = [x[:n_samples], latent_images[:n_samples], x_reconst[:n_samples]]
 
         comparison_images = torch.cat(compare_images)
         grid = make_grid(comparison_images, nrow=n_samples, padding=2)
@@ -150,7 +150,7 @@ class AutoEncoder(pl.LightningModule):
             "accuracy": accuracy
         }
         
-        loss_weighted["sum"] = sum(loss_weighted.values()) 
+        loss_weighted["sum"] = sum(loss_weighted.values())
         loss_unweighted["sum"] = sum(loss_unweighted.values())
         
         self._log_metric_values("Train", "Loss", loss_weighted, additional_context="weighted", on_step=True, on_epoch=True)
@@ -164,12 +164,15 @@ class AutoEncoder(pl.LightningModule):
         x_reconst, latent, loss_internal = self._forward(x)
         loss_unweighted, loss_weighted = self._compute_losses(x, x_reconst, loss_internal)
         
-        loss_weighted["average"] = sum(loss_weighted.values()) / len(loss_weighted)
-        loss_unweighted["average"] = sum(loss_unweighted.values()) / len(loss_unweighted)
+        loss_weighted["sum"] = sum(loss_weighted.values())
+        loss_unweighted["sum"] = sum(loss_unweighted.values())
         
         self._log_metric_values("Validation", "Loss", loss_weighted, additional_context="weighted", on_step=False, on_epoch=True)
         self._log_metric_values("Validation", "Loss", loss_unweighted, on_step=False, on_epoch=True)
         
+        percep_recon_loss = loss_weighted["perceptual"] + loss_weighted["reconst"]
+        self.log("Validation/percep_recon_loss", percep_recon_loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+
     def on_validation_epoch_end(self):
         val_loader = self.trainer.datamodule.val_dataloader()
         
@@ -188,7 +191,7 @@ class AutoEncoder(pl.LightningModule):
             return
         
         latent_images = convert_to_target_visible_channels(latent, target_channels=3, resize=(x.shape[2], x.shape[3]))
-        self._log_comparison_images("Validation", x, x_reconst, self.current_epoch, 
+        self._log_comparison_images("Validation", x, x_reconst, self.global_step, 
                                     latent_images=latent_images, n_samples=n_samples)
         
     def test_step(self, batch, batch_idx):
@@ -196,8 +199,8 @@ class AutoEncoder(pl.LightningModule):
         x_reconst, latent, loss_internal = self._forward(x)
         loss_unweighted, loss_weighted = self._compute_losses(x, x_reconst, loss_internal)
         
-        loss_weighted["average"] = sum(loss_weighted.values()) / len(loss_weighted)
-        loss_unweighted["average"] = sum(loss_unweighted.values()) / len(loss_unweighted)
+        loss_weighted["sum"] = sum(loss_weighted.values())
+        loss_unweighted["sum"] = sum(loss_unweighted.values())
         
         self._log_metric_values("Test", "Loss", loss_weighted, additional_context="weighted", on_step=False, on_epoch=True)
         self._log_metric_values("Test", "Loss", loss_unweighted, on_step=False, on_epoch=True)
@@ -218,5 +221,5 @@ class AutoEncoder(pl.LightningModule):
             return
         
         latent_images = convert_to_target_visible_channels(latent, target_channels=3, resize=(x.shape[2], x.shape[3]))
-        self._log_comparison_images("Test", x, x_reconst, self.current_epoch, 
+        self._log_comparison_images("Test", x, x_reconst, self.global_step, 
                                     latent_images=latent_images, n_samples=n_samples)
