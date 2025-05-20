@@ -2,64 +2,21 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from src.utils.helpers import format_input
+from utils.formats import format_input
 from src.models.blocks import ResNetBlock, SelfAttentionWithResnetBlock
 
 class Encoder(nn.Module):
-    ''' Encoder architecture
-    # - Input -> Block -> MaxPool -> Block -> MaxPool -> Block -> MaxPool -> Block -> MaxPool -> Block -> MaxPool
-    # - Output: 1024 channels, HxW reduced by half at each block
-    # - Each block reduces HxW by half and changes the number of channels'''
-    def __init__(self, latent_dim=128):
+    def __init__(self, in_channels, 
+                 down_channels = [64, 128, 256, 256],
+                 mid_channels = [256, 256],
+                 downsamples = [True, True, True], 
+                 down_attn = [False, False, False],
+                 num_heads = 4,
+                 num_down_layers = 2,
+                 num_mid_layers = 2,
+                 latent_dim = 4):
+        
         super(Encoder, self).__init__()
-        
-        self.latent_dim = latent_dim
-        
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
-        
-        self.block1 = nn.Sequential(
-            ResNetBlock(32, 64),
-            ResNetBlock(64, 64),
-        )
-        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
-        
-        self.block1_1 = nn.Sequential(
-            ResNetBlock(64, 128),
-            ResNetBlock(128, 128),
-        ) 
-        
-        self.block1_2 = nn.Sequential(
-            ResNetBlock(128, 256),
-            ResNetBlock(256, 256),
-        )
-        
-        self.resnet1 = ResNetBlock(256, 512)
-        self.block2 = nn.Sequential(
-            SelfAttentionWithResnetBlock(512, 1024),
-            SelfAttentionWithResnetBlock(1024, 1024),
-        )
-        
-        self.block3 = nn.Sequential(
-            nn.BatchNorm2d(1024),
-            nn.SiLU(),
-            nn.Conv2d(1024, 2 * latent_dim, kernel_size=3, padding=1),  
-        )
-        
-        self.encoder = nn.Sequential(
-            self.conv1,
-            self.block1,
-            self.maxpool,
-            self.block1_1,
-            self.maxpool,
-            self.block1_2,
-            self.maxpool,
-            self.resnet1,
-            self.block2,
-            self.block3,
-        )
-        
-    def forward(self, x):
-        return self.encoder(x)
     
 # Add sigmoid activation to the Decoder class
 class Decoder(nn.Module):

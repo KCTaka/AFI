@@ -1,0 +1,11 @@
+__target__: src.data.kaggle_image_datamodule.KaggleImageDataModule
+kaggle_dataset_path: "badasstechie/celebahq-resized-256x256"
+channels: 3
+image_size: (128, 128)
+train_val_test_split:
+  train: 0.8
+  val: 0.1
+  test: 0.1
+batch_size: 135
+num_workers: 4
+pin_memory: True

@@ -5,119 +5,143 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from src.utils.helpers import format_input
-from src.models.blocks import ResNetBlock, SelfAttentionWithResnetBlock
+from src.models.blocks import DownBlock, MidBlock, UpBlock
+from utils.formats import format_input
+
+
 
 class Encoder(nn.Module):
-    ''' Encoder architecture
-    # - Input -> Block -> MaxPool -> Block -> MaxPool -> Block -> MaxPool -> Block -> MaxPool -> Block -> MaxPool
-    # - Output: 1024 channels, HxW reduced by half at each block
-    # - Each block reduces HxW by half and changes the number of channels'''
-    def __init__(self, latent_dim=128):
+    def __init__(self, in_channels, 
+                 down_channels = [64, 128, 256, 256],
+                 mid_channels = [256, 256],
+                 downsamples = [True, True, True], 
+                 down_attn = [False, False, False],
+                 num_heads = 4,
+                 num_down_layers = 2,
+                 num_mid_layers = 2):
+        
         super(Encoder, self).__init__()
-        self.latent_dim = latent_dim
         
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
+        self.conv_in = nn.Conv2d(in_channels, down_channels[0], kernel_size=3, padding=1)
         
-        self.block1 = nn.Sequential(
-            ResNetBlock(32, 64),
-            ResNetBlock(64, 64),
-        )
-        self.downsample1 = nn.Conv2d(64, 64, kernel_size=4, stride=2, padding=1)
-        
-        self.block1_1 = nn.Sequential(
-            ResNetBlock(64, 128),
-            ResNetBlock(128, 128),
-        ) 
-        self.downsample1_1 = nn.Conv2d(128, 128, kernel_size=4, stride=2, padding=1)
-        
-        self.resnet1 = ResNetBlock(128, 256)
-        self.block2 = nn.Sequential(
-            SelfAttentionWithResnetBlock(256, 512),
-            SelfAttentionWithResnetBlock(512, 512),
-        )
-        
-        self.block3 = nn.Sequential(
-            nn.BatchNorm2d(512),
-            nn.SiLU(),
-            nn.Conv2d(512, latent_dim, kernel_size=3, padding=1),
-        )
-        
-        self.encoder = nn.Sequential(
-            self.conv1,
-            self.block1,
-            self.downsample1,
-            self.block1_1,
-            self.downsample1_1,
-            self.resnet1,
-            self.block2,
-            self.block3,
-        )
-        
+        self.down_blocks = nn.ModuleList()
+        for i in range(len(down_channels)-1):
+            self.down_blocks.append(
+                DownBlock(
+                    down_channels[i], down_channels[i+1],
+                    downsample=downsamples[i], num_heads=num_heads,
+                    num_layers=num_down_layers, use_self_attention=down_attn[i]
+                )
+            )
+
+        self.mid_blocks = nn.ModuleList()
+        for i in range(len(mid_channels)-1):
+            self.mid_blocks.append(
+                MidBlock(
+                    down_channels[-1], out_channels=mid_channels[i],
+                    num_heads=num_heads, num_layers=num_mid_layers
+                )
+            )
+
     def forward(self, x):
-        return self.encoder(x)
-    
+        x = format_input(x)
+        x = self.conv_in(x)
+        for block in self.down_blocks:
+            x = block(x)
+        for block in self.mid_blocks:
+            x = block(x)
+        return x
+
+
 # Add sigmoid activation to the Decoder class
 class Decoder(nn.Module):
-    def __init__(self, latent_dim=128):
+    def __init__(self, im_channels, 
+                 up_channels = [256, 256, 128, 64],
+                 mid_channels = [256, 256],
+                 upsamples = [True, True, True],
+                 up_attn = [False, False, False],
+                 num_heads = 4,
+                 num_up_layers = 2,
+                 num_mid_layers = 2):
+
         super(Decoder, self).__init__()
         
-        self.latent_dim = latent_dim
-        self.conv1 = nn.Conv2d(latent_dim, 512, kernel_size=3, padding=1)
+        self.mid_blocks = nn.ModuleList()
+        for i in range(len(mid_channels)-1):
+            self.mid_blocks.append(
+                MidBlock(
+                    up_channels[i], out_channels=mid_channels[i],
+                    num_heads=num_heads, num_layers=num_mid_layers
+                )
+            )
         
-        self.resnet1 = ResNetBlock(512, 256)
-        self.block1 = nn.Sequential(
-            SelfAttentionWithResnetBlock(256, 128),
-            SelfAttentionWithResnetBlock(128, 128),
-        )
-
-        self.upconv1 = nn.ConvTranspose2d(128, 128, kernel_size=2, stride=2)
-        self.block2 = nn.Sequential(
-            ResNetBlock(128, 64),
-            ResNetBlock(64, 64),
-        )
-
-        self.upconv2 = nn.ConvTranspose2d(64, 64, kernel_size=2, stride=2)
-        self.block2_1 = nn.Sequential(
-            ResNetBlock(64, 32),
-            ResNetBlock(32, 32),
-        )
+        self.up_blocks = nn.ModuleList()
+        for i in range(len(up_channels)-1):
+            self.up_blocks.append(
+                UpBlock(
+                    up_channels[i], up_channels[i+1],
+                    upsample=upsamples[i], num_heads=num_heads,
+                    num_layers=num_up_layers, use_self_attention=up_attn[i]
+                )
+            )
         
-        self.block3 = nn.Sequential(
-            nn.BatchNorm2d(32),
+        self.out_model = nn.Sequential(
+            nn.Conv2d(up_channels[-1], im_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(im_channels),
             nn.SiLU(),
-            nn.Conv2d(32, 3, kernel_size=3, padding=1),
-        )
-        
-        self.decoder = nn.Sequential(
-            self.conv1,   
-            self.resnet1,
-            self.block1,
-            self.upconv1,
-            self.block2,
-            self.upconv2,
-            self.block2_1,
-            self.block3,
-            nn.Tanh(),
         )
         
     def forward(self, x):
-        return self.decoder(x)
+        x = format_input(x)
+        for block in self.mid_blocks:
+            x = block(x)
+        for block in self.up_blocks:
+            x = block(x)
+        x = self.out_model(x)
+        return x
 
 class VQVAE(nn.Module):
-    def __init__(self, embedding_dim, num_embeddings, beta = 0.25):
-        super(VQVAE, self).__init__()
-        self.encoder = Encoder(embedding_dim)
-        self.decoder = Decoder(embedding_dim)
+    def __init__(self, 
+                    embedding_dim = 4, 
+                    num_embeddings = 8192, 
+                    beta=0.25,
+                    im_channels = 3,
+                    down_channels = [64, 128, 256, 256],
+                    mid_channels = [256, 256],
+                    downsamples = [True, True, True],
+                    down_attn = [False, False, False],
+                    num_heads = 4,
+                    num_down_layers = 2,
+                    num_mid_layers = 2,
+                    num_up_layers = 2,
+                    ):
         
-        self.pre_quant_conv = nn.Identity() #nn.Conv2d(embedding_dim, embedding_dim, kernel_size=1)
+        super(VQVAE, self).__init__()
+        self.encoder = Encoder(in_channels=im_channels,
+                                down_channels=down_channels,
+                                mid_channels=mid_channels,
+                                downsamples=downsamples,
+                                down_attn=down_attn,
+                                num_heads=num_heads,
+                                num_down_layers=num_down_layers,
+                                num_mid_layers=num_mid_layers)
+        
+        self.decoder = Decoder(im_channels=im_channels,
+                                up_channels=down_channels[::-1],
+                                mid_channels=mid_channels[::-1],
+                                upsamples=downsamples[::-1],
+                                up_attn=down_attn[::-1],
+                                num_heads=num_heads,
+                                num_up_layers=num_up_layers)
+
+        self.pre_quant_conv = nn.Conv2d(down_channels[-1], embedding_dim, kernel_size=1)
         self.embedding = nn.Embedding(num_embeddings, embedding_dim)
-        self.post_quant_conv = nn.Identity() #nn.Conv2d(embedding_dim, embedding_dim, kernel_size=1)
+        self.post_quant_conv = nn.Conv2d(embedding_dim, down_channels[-1], kernel_size=1)
         
         self.beta = beta
         
     def forward(self, x):
-        x = format_input(x)
+        x = format_input(x) # (B, C, H, W)
         # Encoder
         z_e = self.encoder(x)
         z_e = self.pre_quant_conv(z_e)
@@ -148,13 +172,28 @@ class VQVAE(nn.Module):
         return x_reconst, latent, q_loss
     
 if __name__ == '__main__':
-    import torch_directml 
+    import torch_directml
     device = torch_directml.device()
+    
+    from matplotlib import pyplot as plt
+    from utils.visualizers import convert_to_target_visible_channels
     
     vqvae = VQVAE(128, 512).to(device)
     x = torch.randn(8, 3, 128, 128).to(device)
     x_reconst, latent, q_loss = vqvae(x)
+    
+    latent_visible_image = convert_to_target_visible_channels(latent, target_channels=3)[0] # C, H, W
+    plt.imshow(latent_visible_image.permute(1, 2, 0).detach().cpu().numpy())
+    plt.axis('off')
+    plt.show()
+    
+    x_reconst = convert_to_target_visible_channels(x_reconst, target_channels=3)[0] # C, H, W
+    plt.imshow(x_reconst.permute(1, 2, 0).detach().cpu().numpy())
+    plt.axis('off')
+    plt.show()
+
     print(x_reconst.size())
+    print(latent.size())
     print(q_loss.size())
     print(q_loss)
     print(q_loss.item())

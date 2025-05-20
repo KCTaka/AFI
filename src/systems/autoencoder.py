@@ -5,6 +5,8 @@ import lightning.pytorch as pl
 
 import wandb
 
+from utils.visualizers import convert_to_target_visible_channels
+
 class AutoEncoder(pl.LightningModule):
     def __init__(self, model_ae, 
                  model_d,
@@ -82,8 +84,8 @@ class AutoEncoder(pl.LightningModule):
                 names_list = [metric_type, additional_context, key]
             metric_name = "-".join(names_list)  
             self.log(f"{stage}/{metric_name}", value, on_step=on_step, on_epoch=on_epoch, prog_bar=prog_bar, logger=logger, sync_dist=True)
-            
-    def _log_comparison_images(self, stage, x, x_reconst, n_samples=8):
+
+    def _log_comparison_images(self, stage, x, x_reconst, step, latent_images=None, n_samples=8):
         """
         Log images to wandb.
         Args:
@@ -93,15 +95,20 @@ class AutoEncoder(pl.LightningModule):
             epoch (int): The current epoch number.
             n_samples (int): The number of samples to log.
         """
-        comparison_images = torch.cat([x[:n_samples], x_reconst[:n_samples]])
+        compare_images = [x[:n_samples], x_reconst[:n_samples]]
+
+        if latent_images is not None:
+            compare_images.append(latent_images[:n_samples])
+
+        comparison_images = torch.cat(compare_images)
         grid = make_grid(comparison_images, nrow=n_samples, padding=2)
-        
-        # denrom with mean and std
+
+        # denorm with mean and std
         grid = (grid + 1) / 2
         grid = torch.clamp(grid, 0, 1)
         self.logger.experiment.log({
             f"{stage}/comparison-images": wandb.Image(grid, caption=f"{stage} comparison images at epoch {self.current_epoch}")
-        }, step=self.global_step)
+        }, step=step)
         
     def training_step(self, batch, batch_idx):
         x = self.get_images(batch)
@@ -110,8 +117,7 @@ class AutoEncoder(pl.LightningModule):
         
         self.toggle_optimizer(optimizer_g)
         loss_unweighted, loss_weighted = self._compute_losses(x, x_reconst, loss_internal)
-        loss_weighted_avg = sum(loss_weighted.values()) / len(loss_weighted)
-        self.manual_backward(loss_weighted_avg)
+        self.manual_backward(sum(loss_weighted.values()))
         optimizer_g.step()
         optimizer_g.zero_grad()
         self.untoggle_optimizer(optimizer_g)
@@ -144,8 +150,8 @@ class AutoEncoder(pl.LightningModule):
             "accuracy": accuracy
         }
         
-        loss_weighted["average"] = loss_weighted_avg
-        loss_unweighted["average"] = sum(loss_unweighted.values()) / len(loss_unweighted)
+        loss_weighted["sum"] = sum(loss_weighted.values()) 
+        loss_unweighted["sum"] = sum(loss_unweighted.values())
         
         self._log_metric_values("Train", "Loss", loss_weighted, additional_context="weighted", on_step=True, on_epoch=True)
         self._log_metric_values("Train", "Loss", loss_unweighted, on_step=True, on_epoch=True)
@@ -161,20 +167,29 @@ class AutoEncoder(pl.LightningModule):
         loss_weighted["average"] = sum(loss_weighted.values()) / len(loss_weighted)
         loss_unweighted["average"] = sum(loss_unweighted.values()) / len(loss_unweighted)
         
-        self._log_metric_values("Validation", "Loss", loss_weighted, additional_context="weighted", on_step=True, on_epoch=True)
-        self._log_metric_values("Validation", "Loss", loss_unweighted, on_step=True, on_epoch=True)
+        self._log_metric_values("Validation", "Loss", loss_weighted, additional_context="weighted", on_step=False, on_epoch=True)
+        self._log_metric_values("Validation", "Loss", loss_unweighted, on_step=False, on_epoch=True)
         
     def on_validation_epoch_end(self):
         val_loader = self.trainer.datamodule.val_dataloader()
+        
+        
         val_batch = next(iter(val_loader))
         x = self.get_images(val_batch).to(self.device)
+        n_samples = min(x.shape[0], 8)
+        x = x[:n_samples]
         
         self.eval()
         with torch.no_grad():
-            x_reconst, _, _ = self._forward(x)
+            x_reconst, latent, _ = self._forward(x)
         self.train()
         
-        self._log_comparison_images("Validation", x, x_reconst)
+        if self.trainer.running_sanity_check:
+            return
+        
+        latent_images = convert_to_target_visible_channels(latent, target_channels=3)
+        self._log_comparison_images("Validation", x, x_reconst, self.current_epoch, 
+                                    latent_images=latent_images, n_samples=n_samples)
         
     def test_step(self, batch, batch_idx):
         x = self.get_images(batch)
@@ -184,18 +199,24 @@ class AutoEncoder(pl.LightningModule):
         loss_weighted["average"] = sum(loss_weighted.values()) / len(loss_weighted)
         loss_unweighted["average"] = sum(loss_unweighted.values()) / len(loss_unweighted)
         
-        self._log_metric_values("Test", "Loss", loss_weighted, additional_context="weighted", on_step=True, on_epoch=True)
-        self._log_metric_values("Test", "Loss", loss_unweighted, on_step=True, on_epoch=True)
+        self._log_metric_values("Test", "Loss", loss_weighted, additional_context="weighted", on_step=False, on_epoch=True)
+        self._log_metric_values("Test", "Loss", loss_unweighted, on_step=False, on_epoch=True)
         
     def on_test_epoch_end(self):
         test_loader = self.trainer.datamodule.test_dataloader()
         test_batch = next(iter(test_loader))
         x = self.get_images(test_batch).to(self.device)
+        n_samples = min(x.shape[0], 8)
+        x = x[:n_samples]
         
         self.eval()
         with torch.no_grad():
-            x_reconst, _, _ = self._forward(x)
+            x_reconst, latent, _ = self._forward(x)
         self.train()
         
-        self._log_comparison_images("Test", x, x_reconst)
+        if self.trainer.running_sanity_check:
+            return
         
+        latent_images = convert_to_target_visible_channels(latent, target_channels=3)
+        self._log_comparison_images("Test", x, x_reconst, self.current_epoch, 
+                                    latent_images=latent_images, n_samples=n_samples)

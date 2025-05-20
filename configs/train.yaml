@@ -1,0 +1,11 @@
+defaults:
+  - _self_
+  - models/vqvae: default
+  - models/discriminator: default
+  - models/lpips: default
+  - loggers: wandb
+  - strategy: ddp
+  - callbacks: default
+  - systems: AutoEncoder
+  - datamodule: celebahq-resized
+  - trainer: default

@@ -9,6 +9,11 @@ import kagglehub
 
 from typing import Optional, Tuple, List
 
+def scaler(x: torch.Tensor) -> torch.Tensor:
+    """
+    Assume the input tensor is in the range [0, 1].
+    """
+    return x * 2 - 1
 
 class KaggleImageDataModule(LightningDataModule):
     """
@@ -18,7 +23,7 @@ class KaggleImageDataModule(LightningDataModule):
                  kaggle_dataset_path,
                  channels=3,
                  image_size=(64, 64),
-                 train_val_test_split=(55_000, 5_000, 10_000),
+                 train_val_test_split={"train": 0.8, "val": 0.1, "test": 0.1},
                  batch_size=64,
                  num_workers=4,
                  pin_memory=True):
@@ -33,7 +38,7 @@ class KaggleImageDataModule(LightningDataModule):
         self.transforms = transforms.Compose([
             transforms.Resize(self.hparams.image_size),
             transforms.ToTensor(),
-            transforms.Lambda(lambda x: 2 * x - 1),  # Scale to [-1, 1]
+            transforms.Lambda(scaler),
         ])
 
         self.data_train: Optional[Dataset] = None
@@ -77,8 +82,8 @@ class KaggleImageDataModule(LightningDataModule):
                     "Ensure prepare_data() has run and the path is correct, "
                     "and that it's structured for torchvision.datasets.ImageFolder."
                 )
-            
-            current_splits = self.hparams.train_val_test_split
+            dataset_split = self.hparams.train_val_test_split
+            current_splits = (dataset_split["train"], dataset_split["val"], dataset_split["test"])
             self.data_train, self.data_val, self.data_test = random_split(dataset=self.dataset, lengths=current_splits)
     
     def train_dataloader(self):
@@ -121,10 +126,10 @@ if __name__ == "__main__":
         kaggle_dataset_path=kaggle_dataset_path,
         channels=3,
         image_size=(128, 128),
-        train_val_test_split=(0.70, 0.15, 0.15),  # 70% train, 15% val, 15% test
+        train_val_test_split={"train": 0.8, "val": 0.1, "test": 0.1},  # 80% train, 10% val, 10% test
         batch_size=10,
-        num_workers=4,
-        pin_memory=True,
+        num_workers=1,
+        pin_memory=False,
     )
     datamodule.prepare_data()
     datamodule.setup()

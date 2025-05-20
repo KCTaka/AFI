@@ -1,0 +1,3 @@
+__target__: src.models.discriminator.Discriminator
+im_channels: 3
+conv_channels: [64, 128, 256]

@@ -1,0 +1,3 @@
+defaults:
+  - modelcheckpoint@last_k: last_k
+  - modelcheckpoint@best_k: best_k
