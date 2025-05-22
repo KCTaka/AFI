@@ -1,6 +1,9 @@
 import autoroot
 import autorootcwd
 
+import torch
+torch.set_float32_matmul_precision('medium')
+
 import hydra
 import lightning as L
 from lightning.pytorch import Callback, LightningDataModule, LightningModule, Trainer
