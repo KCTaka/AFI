@@ -1,6 +1,0 @@
-_target_: lightning.pytorch.callbacks.ModelCheckpoint
-monitor: "Validation/percep_recon_loss"
-mode: "min"
-save_top_k: 3
-filename: "model-epoch{epoch:02d}-val_loss{Validation/percep_recon_loss:.2f}"
-dirpath: "checkpoints/best_val_loss_models/"

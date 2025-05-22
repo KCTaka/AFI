@@ -1,9 +1,9 @@
 _target_: src.systems.autoencoder.AutoEncoder
-model_ae: ${models.vqvae}
+model_ae: ${models.autoencoder}
 model_d: ${models.discriminator}
-lpips: ${models.lpips}
+lpips: ${models.perceptual}
 loss_weights:
-  reconst: 10.0
+  reconst: 2.0
   internal: 1.0
   perceptual: 1.0
   adversarial: 0.5

@@ -150,7 +150,7 @@ class UpBlock(nn.Module):
         self.require_down_cat = require_down_cat
 
         if upsample:
-            eff_channels = in_channels // 2
+            eff_channels = in_channels // 2 if require_down_cat else in_channels
             self.up_conv = nn.ConvTranspose2d(eff_channels, eff_channels, kernel_size=4, stride=2, padding=1)
 
         self.model = nn.ModuleList()
@@ -169,8 +169,6 @@ class UpBlock(nn.Module):
             x = self.up_conv(x)
 
         if down_out is not None:
-            print(f"down_out shape: {down_out.shape}")
-            print(f"x shape: {x.shape}")
             x = torch.cat([x, down_out], dim=1)
 
         for layer in self.model:

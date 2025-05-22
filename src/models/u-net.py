@@ -90,14 +90,12 @@ class UNet(nn.Module):
 
             x, pre_x = down_block(x, t, give_pre_x=True)
             down_outs.append(pre_x)
-            print(f"Down Block {i}: {x.shape}")
 
         for i, mid_block in enumerate(self.mid_blocks):
             x = mid_block(x, t)
         
         for i, up_block in enumerate(self.up_blocks):
             down_out = down_outs.pop()
-            print(f"Up Block {i}: {x.shape}")
             x = up_block(x, t, down_out)
         
         x = self.out_block(x)

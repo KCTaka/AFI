@@ -18,25 +18,23 @@ def train(cfg: DictConfig):
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.datamodule)
     
     ## Load the autoencoder weights
-    model_ae = hydra.utils.instantiate(cfg.models.vqvae)
-    # model_d = hydra.utils.instantiate(cfg.models.discriminator)
-    # lpips = hydra.utils.instantiate(cfg.models.lpips)
-    # system_ae = AutoEncoder.load_from_checkpoint(cfg.autoencoder_weights, strict=False, model_ae=model_ae, model_d=model_d, lpips=lpips)
-    # model_ae = system_ae.model_ae
+    model_ae = hydra.utils.instantiate(cfg.models.autoencoder)
+    model_d = hydra.utils.instantiate(cfg.models.discriminator)
+    lpips = hydra.utils.instantiate(cfg.models.perceptual)
+    system_ae = AutoEncoder.load_from_checkpoint(cfg.autoencoder_weights, strict=False, model_ae=model_ae, model_d=model_d, lpips=lpips)
+    model_ae = system_ae.model_ae
     
-
     system_ddpm: LightningModule = hydra.utils.instantiate(cfg.ddpm, model_ae=model_ae)
 
-    logger: Logger = hydra.utils.instantiate(cfg.loggers)
+    logger: list[Logger] = instantiate_list(cfg.loggers.values(), cls=Logger)
     callbacks: list[Callback] = instantiate_list(cfg.callbacks.values(), cls=Callback)
-    strategy: Strategy = hydra.utils.instantiate(cfg.strategy)
 
     trainer: Trainer = hydra.utils.instantiate(
         cfg.trainer, 
         logger=logger,
         callbacks=callbacks,
-        strategy=strategy,
     )
+
     
     trainer.fit(
         model=system_ddpm,

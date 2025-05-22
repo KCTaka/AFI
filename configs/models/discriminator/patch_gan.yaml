@@ -1,0 +1,3 @@
+_target_: src.models.discriminator.PatchGAN
+in_channels: 3
+conv_channels: [64, 128, 256]

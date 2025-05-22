@@ -1,4 +1,16 @@
-_target_: lightning.pytorch.loggers.WandbLogger
-project: "Anime Auto Encoder"
-name: ${now:%Y-%m-%d_%H-%M-%S}
-log_model: "all"
+# https://lightning.ai/docs/pytorch/stable/extensions/generated/lightning.pytorch.loggers.WandbLogger.html
+
+wandb:
+  _target_: lightning.pytorch.loggers.WandbLogger
+  name: null
+  save_dir: "."
+  version: null
+  offline: false
+  dir: null
+  id: null
+  anonymous: null
+  project: null
+  log_model: null
+  experiment: null
+  prefix: ""
+  checkpoint_name: null

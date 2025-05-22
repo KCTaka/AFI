@@ -1,6 +1,0 @@
-_target_: lightning.pytorch.callbacks.ModelCheckpoint
-monitor: "epoch"
-mode: "max"
-save_top_k: 2
-filename: "model-epoch{epoch:02d}-last"
-dirpath: "checkpoints/last_models/"

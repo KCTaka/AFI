@@ -1,16 +1,20 @@
 defaults:
-  - _self_
-  - models/vqvae: default
-  - models/discriminator: default
-  - models/lpips: default
-  - models/u-net: default
-  - scheduler: linear_noise_scheduler
-  - loggers: wandb
-  - strategy: ddp
+  - models/autoencoder: vqvae
+  - models/discriminator: patch_gan
+  - models/perceptual: lpips
+  - models/diffusion: u-net
+  - noise_scheduler: linear
+  - loggers: default
   - callbacks: default
+  - strategy: ddp
   - systems@autoencoder: AutoEncoder
   - systems@ddpm: ddpm
   - datamodule: celebahq-resized
   - trainer: default
+  - _self_
 
-autoencoder_weights: "checkpoints/best_val_loss_models/model-epochepoch=21-val_lossValidation/percep_recon_loss=0.49.ckpt"
+autoencoder_weights: ""
+
+callbacks:
+  best_checkpoints:
+    monitor: "Validation/Loss-ddpm"

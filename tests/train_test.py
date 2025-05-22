@@ -10,7 +10,7 @@ def train_test():
     from src.systems.autoencoder import AutoEncoder
     from src.models.vae import VAE
     from src.models.vqvae import VQVAE
-    from src.models.discriminator import Discriminator
+    from src.models.discriminator import PatchGAN
     from src.models.lpips import LPIPS
     from src.data.kaggle_image_datamodule import KaggleImageDataModule
     
@@ -29,7 +29,7 @@ def train_test():
         num_up_layers=2,
     )
 
-    model_d = Discriminator(
+    model_d = PatchGAN(
         in_channels=3,
         conv_channels=[64, 128, 256],
     )

@@ -6,10 +6,10 @@ import torch.nn as nn
 
 from src.utils.formats import format_input
 
-class Discriminator(nn.Module):
+class PatchGAN(nn.Module):
     def __init__(self, in_channels=3,
                  conv_channels=[64, 128, 256]):
-        super(Discriminator, self).__init__()
+        super(PatchGAN, self).__init__()
         self.conv_channels = conv_channels
         self.in_channels = in_channels
         self.out_channels = 1
@@ -35,7 +35,7 @@ class Discriminator(nn.Module):
 if __name__ == "__main__":
     # Example usage
     x = torch.randn(4, 3, 256, 256)  # Example input tensor
-    model = Discriminator()
+    model = PatchGAN()
     output = model(x)
     print(output.shape)  # Should be (4, 1, 8, 8) for the given input size
     print(model)
