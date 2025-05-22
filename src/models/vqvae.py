@@ -154,6 +154,26 @@ class VQVAE(nn.Module):
         
         self.beta = beta
         
+    def encode(self, x):
+        z_e = self.encoder(x)
+        z_e = self.pre_quant_conv(z_e)
+        B, C, H, W = z_e.size()
+        z_e_flat = z_e.permute(0, 2, 3, 1).reshape((B, H*W, C))
+        distances = torch.cdist(z_e_flat, self.embedding.weight[None, :].repeat(B, 1, 1))
+        
+        # Find nearest embedding
+        z_q_indices = torch.argmin(distances, dim=-1)
+        z_q = torch.index_select(self.embedding.weight, dim=0, index=z_q_indices.view(-1))
+        
+        z_q = z_q.view(B, H, W, C).permute(0, 3, 1, 2)
+        
+        return z_q
+    
+    def decode(self, z_q):
+        z_q = self.post_quant_conv(z_q)
+        x_reconst = self.decoder(z_q)
+        return x_reconst
+        
     def forward(self, x):
         x = format_input(x) # (B, C, H, W)
         # Encoder

@@ -135,8 +135,10 @@ if __name__ == "__main__":
     datamodule.setup()
     
     test_dataloader = datamodule.test_dataloader()
-    batch = next(iter(test_dataloader))[0]
+    batch, item2 = next(iter(test_dataloader))
     print(f"Batch size: {batch.size()}")
     print(f"Batch min: {batch.min()}")
     print(f"Batch max: {batch.max()}")
+    
+    print(f"Item2: {item2}")
 

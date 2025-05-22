@@ -1,3 +1,6 @@
+import autoroot
+import autorootcwd
+
 import torch
 import torch.nn as nn
 from torchvision.utils import make_grid
@@ -5,7 +8,7 @@ import lightning.pytorch as pl
 
 import wandb
 
-from utils.visualizers import convert_to_target_visible_channels
+from src.utils.visualizers import convert_to_target_visible_channels
 
 class AutoEncoder(pl.LightningModule):
     def __init__(self, model_ae, 
@@ -52,7 +55,7 @@ class AutoEncoder(pl.LightningModule):
     
     def _compute_losses(self, x, x_reconst, loss_internal):
         loss_reconst = self.criterion_reconst(x_reconst, x)
-        loss_perceptual = self.criterion_perceptual(x_reconst, x)
+        loss_perceptual = self.criterion_perceptual(torch.clamp(x_reconst, -1, 1), x)
         
         #### Adversarial loss ####
         pred_d = self.model_d(x_reconst).view(-1)
@@ -171,7 +174,7 @@ class AutoEncoder(pl.LightningModule):
         self._log_metric_values("Validation", "Loss", loss_unweighted, on_step=False, on_epoch=True)
         
         percep_recon_loss = loss_weighted["perceptual"] + loss_weighted["reconst"]
-        self.log("Validation/percep_recon_loss", percep_recon_loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log("Validation/percep_recon_loss", percep_recon_loss, on_step=False, on_epoch=True, prog_bar=True, logger=True, sync_dist=True)
 
     def on_validation_epoch_end(self):
         val_loader = self.trainer.datamodule.val_dataloader()
@@ -187,8 +190,8 @@ class AutoEncoder(pl.LightningModule):
             x_reconst, latent, _ = self._forward(x)
         self.train()
         
-        if self.trainer.state.stage == "sanity_check":
-            return
+        # if self.trainer.state.stage == "sanity_check":
+        #     return
         
         latent_images = convert_to_target_visible_channels(latent, target_channels=3, resize=(x.shape[2], x.shape[3]))
         self._log_comparison_images("Validation", x, x_reconst, self.global_step, 
@@ -217,8 +220,8 @@ class AutoEncoder(pl.LightningModule):
             x_reconst, latent, _ = self._forward(x)
         self.train()
         
-        if self.trainer.state.stage == "sanity_check":
-            return
+        # if self.trainer.state.stage == "sanity_check":
+        #     return
         
         latent_images = convert_to_target_visible_channels(latent, target_channels=3, resize=(x.shape[2], x.shape[3]))
         self._log_comparison_images("Test", x, x_reconst, self.global_step, 
