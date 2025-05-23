@@ -10,7 +10,7 @@ wandb:
   id: null
   anonymous: null
   project: null
-  log_model: "all"
+  log_model: false
   experiment: null
   prefix: ""
   checkpoint_name: null

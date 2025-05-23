@@ -1,5 +1,3 @@
-# @package modelcheckpoint.default
-
 _target_: lightning.pytorch.callbacks.ModelCheckpoint
 dirpath: null
 monitor: null

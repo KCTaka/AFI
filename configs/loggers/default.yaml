@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 wandb:
-  _target_: lightning.pytorch.loggers.WandbLogger
+  _target_: src.loggers.extended_wandb.ExtendedWandbLogger
   project: "Anime Auto Encoder"
   name: ${now:%Y-%m-%d_%H-%M-%S}
-  log_model: "all"
+  log_model: true

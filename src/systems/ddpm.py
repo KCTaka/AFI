@@ -12,11 +12,11 @@ from src.utils.visualizers import convert_to_target_visible_channels
 
 
 class DDPM(pl.LightningModule):
-    def __init__(self, model_ae, model, noise_scheduler, lr=1e-4, betas=(0.9, 0.999)):
+    def __init__(self, model_ae, model_diffusion, noise_scheduler, lr=1e-4, betas=(0.9, 0.999)):
         super(DDPM, self).__init__()
-        self.save_hyperparameters(ignore=["model_ae", "model", "noise_scheduler"])
+        self.save_hyperparameters(ignore=["model_ae", "model_diffusion", "noise_scheduler"])
         self.model_ae = model_ae
-        self.model = model
+        self.model_diffusion = model_diffusion
         self.noise_scheduler = noise_scheduler
         
         self.criterion = nn.MSELoss()
@@ -63,13 +63,12 @@ class DDPM(pl.LightningModule):
 
         for i in reversed(range(num_timesteps)):
             t_tensor = torch.full((n_samples,), i, device=device, dtype=torch.long)
-            noise_pred = self.model(xt, t_tensor)
+            noise_pred = self.model_diffusion(xt, t_tensor)
             xt, x0_pred = self.noise_scheduler.sample_prev_timestep(xt, noise_pred, t_tensor)
             # Only decode and save the final image to save time
-            if i == 0:
+            if i % (num_timesteps // 10) == 0:
                 decoded = self.model_ae.decode(xt)
-                decoded_vis = convert_to_target_visible_channels(decoded, target_channels=3)
-                images.append(decoded_vis)
+                images.append(decoded)
             # Optionally, you can append intermediate xt for visualization
             # else:
             #     images.append(convert_to_target_visible_channels(xt, target_channels=3))
@@ -88,7 +87,7 @@ class DDPM(pl.LightningModule):
         """
         Forward pass through the model.
         """
-        return self.model(x, t)
+        return self.model_diffusion(x, t)
     
     def get_images(self, batch):
         """
@@ -102,8 +101,8 @@ class DDPM(pl.LightningModule):
             latent = self.model_ae.encode(x)
         t = torch.randint(0, self.noise_scheduler.num_timesteps, (latent.size(0),), device=latent.device).long()
         noise = torch.randn_like(latent)
-        x_t = self.noise_scheduler.add_noise(latent, noise, t)
-        noise_pred = self.model(x_t, t)
+        x_t = self.noise_scheduler.add_noise(latent, noise, t).detach()
+        noise_pred = self.model_diffusion(x_t, t)
         loss = self.criterion(noise_pred, noise)
         # Log train loss
         self._log_metric_values("Train", "Loss", {"ddpm": loss}, on_step=True, on_epoch=True, prog_bar=True)
@@ -116,10 +115,8 @@ class DDPM(pl.LightningModule):
             t = torch.randint(0, self.noise_scheduler.num_timesteps, (latent.size(0),), device=latent.device).long()
             noise = torch.randn_like(latent)
             x_t = self.noise_scheduler.add_noise(latent, noise, t)
-            noise_pred = self.model(x_t, t)
+            noise_pred = self.model_diffusion(x_t, t)
             loss = self.criterion(noise_pred, noise)
-            # Denoise the noised latent (one step)
-            denoised_latent = self.noise_scheduler.sample_prev_timestep(x_t, noise_pred, t)
         # Log val loss
         self._log_metric_values("Validation", "Loss", {"ddpm": loss}, on_step=False, on_epoch=True, prog_bar=True)
         # No need to store last batch
@@ -136,7 +133,7 @@ class DDPM(pl.LightningModule):
             t = torch.randint(0, self.noise_scheduler.num_timesteps, (latent.size(0),), device=latent.device).long()
             noise = torch.randn_like(latent)
             x_t = self.noise_scheduler.add_noise(latent, noise, t)
-            noise_pred = self.model(x_t, t)
+            noise_pred = self.model_diffusion(x_t, t)
             denoised_latent, x0_pred = self.noise_scheduler.sample_prev_timestep(x_t, noise_pred, t)
         n_samples = min(x.shape[0], 8)
         # Visualize latent, noised_latent, denoised_latent as images
@@ -159,7 +156,7 @@ class DDPM(pl.LightningModule):
         """
         Configure the optimizer and learning rate scheduler.
         """
-        optimizer = torch.optim.AdamW(self.parameters(), lr=self.hparams.lr, betas=self.hparams.betas)
+        optimizer = torch.optim.AdamW(self.model_diffusion.parameters(), lr=self.hparams.lr, betas=self.hparams.betas)
         return optimizer
 
 
