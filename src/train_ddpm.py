@@ -25,7 +25,7 @@ def train(cfg: DictConfig):
     model_d = hydra.utils.instantiate(cfg.models.discriminator)
     lpips = hydra.utils.instantiate(cfg.models.perceptual)
     system_ae = AutoEncoder.load_from_checkpoint(cfg.autoencoder_weights, strict=False, model_ae=model_ae, model_d=model_d, lpips=lpips)
-    model_ae = system_ae.model_ae
+    model_ae = system_ae.model_ae.eval()
     
     system_ddpm: LightningModule = hydra.utils.instantiate(cfg.ddpm, model_ae=model_ae)
 

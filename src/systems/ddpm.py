@@ -15,7 +15,11 @@ class DDPM(pl.LightningModule):
     def __init__(self, model_ae, model_diffusion, noise_scheduler, lr=1e-4, betas=(0.9, 0.999)):
         super(DDPM, self).__init__()
         self.save_hyperparameters(ignore=["model_ae", "model_diffusion", "noise_scheduler"])
-        self.model_ae = model_ae
+        self.model_ae = model_ae.eval()
+        
+        for param in self.model_ae.parameters():
+            param.requires_grad = False
+        
         self.model_diffusion = model_diffusion
         self.noise_scheduler = noise_scheduler
         
