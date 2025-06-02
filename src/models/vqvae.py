@@ -228,22 +228,41 @@ if __name__ == '__main__':
     ).to(device)
     
     x = torch.randn(8, 3, 128, 128).to(device)
+    
+    vqvae.eval()                # freeze BatchNorm in both encoder & decoder
+
     x_reconst, latent, q_loss = vqvae(x)
     
-    latent_visible_image = convert_to_target_visible_channels(latent, target_channels=3)[0] # C, H, W
-    plt.imshow(latent_visible_image.permute(1, 2, 0).detach().cpu().numpy())
-    plt.axis('off')
-    plt.show()
+    # round‐trip encode/decode
+    z_q = vqvae.encode(x)
+    x_reconst_from_encode = vqvae.decode(z_q)
     
-    x_reconst = convert_to_target_visible_channels(x_reconst, target_channels=3)[0] # C, H, W
-    plt.imshow(x_reconst.permute(1, 2, 0).detach().cpu().numpy())
-    plt.axis('off')
-    plt.show()
+    assert torch.allclose(x_reconst, x_reconst_from_encode, atol=1e-5), (
+        "Reconstructed image from encode-decode does not match original reconstruction."
+    )
+    assert torch.allclose(latent, z_q, atol=1e-5), (
+        "Latent representation from encode does not match the latent "
+        "representation from the forward pass."
+    )
+    
+    print("Passed .encode-decode consistency check.")
+    
+    # Visualize the original image, latent representation, and reconstructed image
+    # latent_visible_image = convert_to_target_visible_channels(latent, target_channels=3)[0] # C, H, W
+    # plt.imshow(latent_visible_image.permute(1, 2, 0).detach().cpu().numpy())
+    # plt.axis('off')
+    # plt.show()
+    
+    # x_reconst = convert_to_target_visible_channels(x_reconst, target_channels=3)[0] # C, H, W
+    # plt.imshow(x_reconst.permute(1, 2, 0).detach().cpu().numpy())
+    # plt.axis('off')
+    # plt.show()
 
-    print(x_reconst.size())
-    print(latent.size())
-    print(q_loss.size())
-    print(q_loss)
-    print(q_loss.item())
-    print(q_loss.item() / x.size(0))
-    print(vqvae)
+    # print(x_reconst.size())
+    # print(latent.size())
+    # print(q_loss.size())
+    # print(q_loss)
+    # print(q_loss.item())
+    # print(q_loss.item() / x.size(0))
+    # print(vqvae)
+    

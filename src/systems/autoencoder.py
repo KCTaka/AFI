@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchvision.utils import make_grid
+from torchvision.transforms.functional import to_pil_image
 import lightning.pytorch as pl
 
 import wandb
@@ -123,6 +124,7 @@ class AutoEncoder(pl.LightningModule):
         # denorm with mean and std
         grid = (grid + 1) / 2
         grid = torch.clamp(grid, 0, 1)
+        grid = to_pil_image(grid)
         self.logger.experiment.log({
             f"{stage}/comparison-images": wandb.Image(grid, caption=f"{stage} comparison images at epoch {self.current_epoch}")
         }, step=step)

@@ -14,4 +14,3 @@ autoroot
 autorootcwd
 hydra-core
 mypy
-google-cloud-storage

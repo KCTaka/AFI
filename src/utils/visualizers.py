@@ -104,7 +104,13 @@ def convert_to_target_visible_channels(latent_image: torch.Tensor, target_channe
                 _U_svd, _S_svd, Vh_svd = torch.linalg.svd(data_centered, full_matrices=False)
             except Exception as e_svd:
                 # Chain the exceptions for better debugging info
-                raise RuntimeError(f"SVD computation failed during PCA fallback after pca_lowrank failed with '{str(e_pca)}'. SVD error: '{str(e_svd)}'") from e_svd
+                print(f"SVD computation failed during PCA fallback after pca_lowrank failed with '{str(e_pca)}'. SVD error: '{str(e_svd)}'")
+                print(f"Returning original latent image as fallback with first {target_channels} channels.")
+
+                ## Just pick the first target_channels channels as a last resort
+                output_images = latent_image[:, :target_channels, :, :]  # (B, target_channels, H, W)
+                output_images = torch.nn.functional.interpolate(output_images, size=resize, mode=mode) if resize is not None else output_images
+                return output_images
 
             # Principal components (eigenvectors of X_centered.T @ X_centered)
             # V_components_svd has shape (C_original, target_channels)
