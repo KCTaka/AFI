@@ -3,6 +3,7 @@ import autorootcwd
 
 import torch
 import torch.nn as nn
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchvision.utils import make_grid
 import lightning.pytorch as pl
 
@@ -43,7 +44,20 @@ class AutoEncoder(pl.LightningModule):
         optimizer_g = torch.optim.Adam(self.model_ae.parameters(), lr=self.hparams.lr_g, betas=self.hparams.betas_g)
         optimizer_d = torch.optim.Adam(self.model_d.parameters(), lr=self.hparams.lr_d, betas=self.hparams.betas_d)
         
-        return [optimizer_g, optimizer_d], []
+        scheduler_g = ReduceLROnPlateau(optimizer_g, mode='min', factor=0.5, patience=5, verbose=True)
+        return (
+            {
+                "optimizer": optimizer_g,
+                "lr_scheduler": {
+                    "scheduler": scheduler_g,
+                    "monitor": "Validation/percep_recon_loss",
+                    "frequency": 1,
+                }
+            },
+            {
+                "optimizer": optimizer_d,
+            }
+        )
     
     def get_images(self, batch):
         return batch[0]

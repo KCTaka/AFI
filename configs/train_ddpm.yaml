@@ -13,8 +13,6 @@ defaults:
   - trainer: default
   - _self_
 
-autoencoder_weights: ""
-
 callbacks:
   best_checkpoints:
     monitor: "Validation/Loss-ddpm"

@@ -3,6 +3,7 @@ import autorootcwd
 
 import torch
 import torch.nn as nn
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchvision.utils import make_grid
 import lightning.pytorch as pl
 
@@ -161,7 +162,15 @@ class DDPM(pl.LightningModule):
         Configure the optimizer and learning rate scheduler.
         """
         optimizer = torch.optim.AdamW(self.model_diffusion.parameters(), lr=self.hparams.lr, betas=self.hparams.betas)
-        return optimizer
+        scheduler = ReduceLROnPlateau(optimizer, mode="min", factor=0.1, patience=5, threshold=1e-4)
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "monitor": "Validation/Loss_ddpm",
+                "frequency": 1,
+            }
+        }
 
 
 

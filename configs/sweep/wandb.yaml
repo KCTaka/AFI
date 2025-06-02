@@ -32,5 +32,4 @@ parameters:
 
 early_terminate:
   type: "hyperband"
-  min_iter: 1
-  max_iter: 10
+  min_iter: 2
