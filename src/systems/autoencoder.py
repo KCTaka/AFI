@@ -45,7 +45,7 @@ class AutoEncoder(pl.LightningModule):
         optimizer_g = torch.optim.Adam(self.model_ae.parameters(), lr=self.hparams.lr_g, betas=self.hparams.betas_g)
         optimizer_d = torch.optim.Adam(self.model_d.parameters(), lr=self.hparams.lr_d, betas=self.hparams.betas_d)
         
-        scheduler_g = ReduceLROnPlateau(optimizer_g, mode='min', factor=0.5, patience=5, verbose=True)
+        scheduler_g = ReduceLROnPlateau(optimizer_g, mode='min', factor=0.5, patience=3)
         return (
             {
                 "optimizer": optimizer_g,

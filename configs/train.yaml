@@ -13,7 +13,7 @@ defaults:
 
 loggers:
   wandb:
-    project: "DDPM Test 128x128"
+    project: "AE Test 256x256"
 
 datamodule:
   num_workers: 16
