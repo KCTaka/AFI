@@ -11,6 +11,7 @@ defaults:
   - systems@ddpm: ddpm
   - datamodule: celebahq-resized
   - trainer: default
+  - sweep: null
   - _self_
 
 callbacks:

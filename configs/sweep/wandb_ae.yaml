@@ -1,0 +1,77 @@
+name: sweep_ae
+method: bayes
+metric:
+  name: "Validation/percep_recon_loss"
+  goal: minimize
+
+parameters:
+  systems.model_ae.embedding_dim:
+    distribution: int_uniform
+    min: 3
+    max: 6
+  systems.model_ae.num_embeddings:
+    distribution: q_log_uniform_valuess
+    min: 1024
+    max: 16384
+  systems.model_ae.beta:
+    distribution: log_uniform_values
+    min: 1e-3
+    max: 9e-1
+  systems.model_ae.down_channels:
+    values:
+      - [64, 128, 256, 256]
+      - [32, 64, 128, 256]
+      - [16, 64, 128, 256]
+  systems.model_ae.num_heads:
+    values: [2, 4, 8, 16, 32]
+  systems.model_ae.num_down_layers:
+    distribution: int_uniform
+    min: 1
+    max: 4
+  systems.model_ae.num_mid_layers:
+    distribution: int_uniform
+    min: 1
+    max: 4
+  systems.model_ae.num_up_layers:
+    distribution: int_uniform
+    min: 1
+    max: 4
+  systems.model_d.conv_channels:
+    values:
+      - [64, 128, 256]
+      - [32, 64, 128]
+      - [16, 32, 64]
+      - [64, 128, 256, 512]
+  systems.loss_weights.reconst:
+    distribution: log_uniform_values
+    min: 1e-5
+    max: 1e2
+  systems.loss_weights.internal:
+    distribution: log_uniform_values
+    min: 1e-5
+    max: 1e2
+  systems.loss_weights.perceptual:
+    distribution: log_uniform_values
+    min: 1e-5
+    max: 1e2
+  systems.loss_weights.adversarial:
+    distribution: log_uniform_values
+    min: 1e-5
+    max: 1e2
+  systems.lr_g:
+    distribution: log_uniform_values
+    min: 1e-6
+    max: 1e-1
+  systems.lr_d:
+    distribution: log_uniform_values
+    min: 1e-6
+    max: 1e-1
+  datamodule.batch_size:
+    values: [16, 32, 64, 128]
+
+early_terminate:
+  type: "hyperband"
+  min_iter: 3
+
+agent:
+  count: 50

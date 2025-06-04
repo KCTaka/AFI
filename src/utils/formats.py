@@ -1,3 +1,7 @@
+import autoroot
+import autorootcwd
+import os
+
 def format_input(x, expected_input_dim = 3, batched=True):
     """Formats the input tensor to the expected dimensions.
 
@@ -26,6 +30,16 @@ def format_input(x, expected_input_dim = 3, batched=True):
                 raise ValueError(f"Likely got batched input, but expected {expected_input_dim} dimensions, got {x.dim()}")
             
     raise ValueError(f"Expected input tensor to have {expected_input_dim} or {expected_input_dim + 1} dimensions, but got {x.dim()}")
+
+def get_relative_model_ckpt_path(absolute_artifact_dir_path: str, model_filename: str = "model.ckpt") -> str:
+    project_root = os.getcwd()  # e.g., /workspace/AFI thanks to autorootcwd
+
+    relative_dir_path = os.path.relpath(absolute_artifact_dir_path, project_root)
+
+    if relative_dir_path == ".":
+        return model_filename
+    else:
+        return os.path.join(relative_dir_path, model_filename)
 
 
 if __name__ == "__main__":

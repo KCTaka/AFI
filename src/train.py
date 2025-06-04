@@ -9,12 +9,22 @@ import lightning as L
 from lightning.pytorch import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
 from lightning.pytorch.strategies import Strategy
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
+import wandb
 
-from src.utils.hydra import instantiate_list
+from src.utils.hydra import instantiate_list, flat_dict_to_nested_dict
 
-@hydra.main(version_base=None, config_path="../configs", config_name="train")
-def train(cfg: DictConfig):
+def train(cfg: DictConfig, is_sweep: bool = False):
+    
+    if is_sweep:
+        run = wandb.init(
+            project=cfg.loggers.wandb.project,
+            job_type="sweep"
+        )
+        
+        sweep_cfg = flat_dict_to_nested_dict(wandb.config)
+        cfg = OmegaConf.merge(cfg, sweep_cfg)
+        
     # Initialize the data module
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.datamodule)
 
@@ -38,6 +48,27 @@ def train(cfg: DictConfig):
         model=system,
         datamodule=datamodule,
     )
+
+@hydra.main(version_base=None, config_path="../configs", config_name="train")
+def main(cfg: DictConfig):
+    
+    if cfg.sweep is None:
+        train(cfg, is_sweep=False)
+        return
+    
+    train_ae = lambda: train(cfg=cfg, is_sweep=True)
+    sweep_cfg = OmegaConf.to_container(cfg.sweep, resolve=True)
+    sweep_id = wandb.sweep(
+        sweep_cfg,
+        project=cfg.loggers.wandb.project,
+    )
+    wandb.agent(
+        sweep_id,
+        function=train_ae,
+        count=cfg.sweep.agent.count,
+        project=cfg.loggers.wandb.project,
+    )
+        
     
 if __name__ == "__main__":
-    train()
+    main()

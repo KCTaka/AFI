@@ -4,9 +4,8 @@ import autorootcwd
 import torch
 import torch.nn as nn
 
-from src.models.blocks import DownBlock, MidBlock, UpBlock, get_time_embedding
-
-
+from src.models.blocks import DownBlock, MidBlock, UpBlock
+from src.utils.embedding import get_time_embedding
 
 class UNet(nn.Module):
     def __init__(self,

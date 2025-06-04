@@ -5,20 +5,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import math
-
-def get_time_embedding(t: torch.Tensor, embedding_dim: int, max_period: int = 10000):
-    half = embedding_dim // 2
-    freqs = torch.exp(-math.log(max_period) * torch.arange(half, device=t.device) / (half - 1) )
-    # [batch, half]
-    args = t[:, None] * freqs[None, :]  # [batch, half]
-    emb = torch.cat([torch.sin(args), torch.cos(args)], dim=1)
-
-    if embedding_dim % 2 == 1:
-        emb = F.pad(emb, (0, 1))
-        
-    return emb  # [batch, embedding_dim]
-
 class ResNetBlock(nn.Module):
     def __init__(self, in_channels, out_channels, t_emb_dim=None):
         super(ResNetBlock, self).__init__()
@@ -104,7 +90,7 @@ class DownBlock(nn.Module):
         if downsample:
             self.down_conv = nn.Conv2d(out_channels, out_channels, kernel_size=4, stride=2, padding=1)
             
-    def forward(self, x, t_emb):
+    def forward(self, x, t_emb=None):
         for layer in self.model:
             if isinstance(layer, SelfAttentionBlock):
                 x = layer(x) + x

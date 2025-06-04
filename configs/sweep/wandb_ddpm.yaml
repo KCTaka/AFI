@@ -1,4 +1,4 @@
-name: sweeptest
+name: sweep_ddpm
 method: bayes
 metric:
   name: "Validation/Loss-ddpm"
@@ -33,3 +33,6 @@ parameters:
 early_terminate:
   type: "hyperband"
   min_iter: 2
+
+agent:
+  count: 50

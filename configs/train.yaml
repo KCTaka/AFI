@@ -8,4 +8,8 @@ defaults:
   - systems: AutoEncoder
   - datamodule: celebahq-resized
   - trainer: default
+  - sweep: null
   - _self_
+
+datamodule:
+  num_workers: 16

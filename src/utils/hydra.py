@@ -1,7 +1,7 @@
 
 import hydra
 from hydra.utils import instantiate
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 from typing import Any, Type, List, Optional
 
@@ -31,3 +31,9 @@ def instantiate_list(configs: List[DictConfig],
                 instances.append(instance)
 
     return instances
+
+def flat_dict_to_nested_dict(flat_dict):
+    nested_dict = OmegaConf.create()
+    for key, value in flat_dict.items():
+        OmegaConf.update(nested_dict, key, value, merge=True)
+    return nested_dict
