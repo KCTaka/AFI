@@ -5,38 +5,38 @@ metric:
   goal: minimize
 
 parameters:
-  systems.model_ae.embedding_dim:
+  models.autoencoder.embedding_dim:
     distribution: int_uniform
     min: 3
     max: 6
-  systems.model_ae.num_embeddings:
+  models.autoencoder.num_embeddings:
     distribution: q_log_uniform_values
     min: 1024
     max: 16384
-  systems.model_ae.beta:
+  models.autoencoder.beta:
     distribution: log_uniform_values
     min: 1e-3
     max: 9e-1
-  systems.model_ae.down_channels:
+  models.autoencoder.down_channels:
     values:
       - [64, 128, 256, 256]
       - [32, 64, 128, 256]
       - [16, 64, 128, 256]
-  systems.model_ae.num_heads:
+  models.autoencoder.num_heads:
     values: [2, 4, 8, 16, 32]
-  systems.model_ae.num_down_layers:
+  models.autoencoder.num_down_layers:
     distribution: int_uniform
     min: 1
     max: 4
-  systems.model_ae.num_mid_layers:
+  models.autoencoder.num_mid_layers:
     distribution: int_uniform
     min: 1
     max: 4
-  systems.model_ae.num_up_layers:
+  models.autoencoder.num_up_layers:
     distribution: int_uniform
     min: 1
     max: 4
-  systems.model_d.conv_channels:
+  models.discriminator.conv_channels:
     values:
       - [64, 128, 256]
       - [32, 64, 128]
@@ -72,3 +72,9 @@ parameters:
 early_terminate:
   type: "hyperband"
   min_iter: 3
+
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - ${args_no_hyphens}
