@@ -11,5 +11,11 @@ defaults:
   - sweep: null
   - _self_
 
+loggers:
+  wandb:
+    project: "DDPM Test 128x128"
+
 datamodule:
   num_workers: 16
+
+sweep_agent_count: 50

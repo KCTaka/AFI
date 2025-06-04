@@ -10,7 +10,7 @@ parameters:
     min: 3
     max: 6
   systems.model_ae.num_embeddings:
-    distribution: q_log_uniform_valuess
+    distribution: q_log_uniform_values
     min: 1024
     max: 16384
   systems.model_ae.beta:
@@ -72,6 +72,3 @@ parameters:
 early_terminate:
   type: "hyperband"
   min_iter: 3
-
-agent:
-  count: 50
