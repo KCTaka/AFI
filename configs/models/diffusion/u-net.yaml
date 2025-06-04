@@ -1,12 +1,13 @@
 _target_: src.models.u-net.UNet
 in_channels: 4
 out_channels: 4
-down_channels: [64, 128, 256]
-mid_channels: [256, 256]
+down_channels: [256, 384, 512, 768]
+mid_channels: [768, 512]
 t_emb_dim: 512
-downsamples: [True, True]
+downsamples: [True, True, True]
 num_down_layers: 2
 num_mid_layers: 2
 num_up_layers: 2
-self_attn: [True, True]
-num_heads: 4
+self_attn: [True, True, True]
+num_heads: 16
+conv_out_channels: 128

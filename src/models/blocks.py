@@ -5,7 +5,19 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from src.models.embeddings import TimeEmbedding
+import math
+
+def get_time_embedding(t: torch.Tensor, embedding_dim: int, max_period: int = 10000):
+    half = embedding_dim // 2
+    freqs = torch.exp(-math.log(max_period) * torch.arange(half, device=t.device) / (half - 1) )
+    # [batch, half]
+    args = t[:, None] * freqs[None, :]  # [batch, half]
+    emb = torch.cat([torch.sin(args), torch.cos(args)], dim=1)
+
+    if embedding_dim % 2 == 1:
+        emb = F.pad(emb, (0, 1))
+        
+    return emb  # [batch, embedding_dim]
 
 class ResNetBlock(nn.Module):
     def __init__(self, in_channels, out_channels, t_emb_dim=None):
@@ -15,8 +27,11 @@ class ResNetBlock(nn.Module):
             nn.SiLU(),
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
         )
-
-        self.time_embedding = TimeEmbedding(out_dim=out_channels, time_dim=t_emb_dim) if t_emb_dim else None
+        
+        self.time_embedding_layer = nn.Sequential(
+            nn.SiLU(),
+            nn.Linear(t_emb_dim, out_channels),
+        ) if t_emb_dim is not None else None
 
         self.block2 = nn.Sequential(
             nn.BatchNorm2d(out_channels),
@@ -26,12 +41,12 @@ class ResNetBlock(nn.Module):
         
         self.skip_conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
         
-    def forward(self, x, t=None):
+    def forward(self, x, t_emb=None):
         init_x = x
         x = self.block1(x)
 
-        if self.time_embedding is not None and t is not None:
-            t_emb = self.time_embedding(t)
+        if self.time_embedding_layer is not None and t_emb is not None:
+            t_emb = self.time_embedding_layer(t_emb)
             x = x + t_emb.view(x.size(0), x.size(1), 1, 1)
         
         x = self.block2(x)
@@ -89,21 +104,18 @@ class DownBlock(nn.Module):
         if downsample:
             self.down_conv = nn.Conv2d(out_channels, out_channels, kernel_size=4, stride=2, padding=1)
             
-    def forward(self, x, t=None, give_pre_x=False):
+    def forward(self, x, t_emb):
         for layer in self.model:
             if isinstance(layer, SelfAttentionBlock):
                 x = layer(x) + x
             if isinstance(layer, ResNetBlock):
-                x = layer(x, t=t)
+                x = layer(x, t_emb=t_emb)
             else:
                 x = layer(x)
-                
-        pre_x = x
+        
         if self.downsample:
             x = self.down_conv(x)
 
-        if give_pre_x:
-            return x, pre_x
         return x
 
 class MidBlock(nn.Module):
@@ -124,10 +136,10 @@ class MidBlock(nn.Module):
 
             self.model.append(ResNetBlock(out_channels, out_channels, t_emb_dim=t_emb_dim))
 
-    def forward(self, x, t=None):
+    def forward(self, x, t_emb=None):
         for layer in self.model:
             if isinstance(layer, ResNetBlock):
-                x = layer(x, t=t)
+                x = layer(x, t_emb=t_emb)
             elif isinstance(layer, SelfAttentionBlock):
                 x = layer(x) + x
             else:
@@ -163,7 +175,7 @@ class UpBlock(nn.Module):
             if use_self_attention:
                 self.model.append(SelfAttentionBlock(out_channels, num_heads))
 
-    def forward(self, x, t=None, down_out=None):
+    def forward(self, x, t_emb=None, down_out=None):
         
         if self.upsample:
             x = self.up_conv(x)
@@ -175,20 +187,23 @@ class UpBlock(nn.Module):
             if isinstance(layer, SelfAttentionBlock):
                 x = layer(x) + x
             elif isinstance(layer, ResNetBlock):
-                x = layer(x, t=t)
+                x = layer(x, t_emb=t_emb)
             else:
                 x = layer(x)
         return x
 
 if __name__ == "__main__":
     # Example usage
-    x = torch.randn(4, 3, 64, 64)  # Example input tensor
-    down_block = DownBlock(3, 64, downsample=True, num_heads=4, num_layers=2, use_self_attention=True)
-    output = down_block(x)
+    import torch_directml
+    device = torch_directml.device()
+    x = torch.randn(4, 3, 64, 64).to(device)  # Example input tensor
+    t_emb = torch.randn(4, 32).to(device)  # Example time embedding tensor
+    down_block = DownBlock(3, 64, downsample=True, num_heads=4, num_layers=2, use_self_attention=True).to(device)
+    output = down_block(x, t_emb=t_emb)
     print(output.shape)
-    mid_block = MidBlock(64, 128, t_emb_dim=32, num_heads=4, num_layers=2)
-    output = mid_block(output)
+    mid_block = MidBlock(64, 128, t_emb_dim=32, num_heads=4, num_layers=2).to(device)
+    output = mid_block(output, t_emb=t_emb)
     print(output.shape)
-    up_block = UpBlock(128, 64, upsample=True, num_heads=4, num_layers=2, use_self_attention=True)
-    output = up_block(output)
+    up_block = UpBlock(128, 64, upsample=True, num_heads=4, num_layers=2, use_self_attention=False).to(device)
+    output = up_block(output, t_emb=t_emb)
     print(output.shape)

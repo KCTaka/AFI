@@ -16,3 +16,12 @@ defaults:
 callbacks:
   best_checkpoints:
     monitor: "Validation/Loss-ddpm"
+
+loggers:
+  wandb:
+    project: "DDPM Test 128x128"
+
+datamodule:
+  batch_size: 32
+  num_workers: 8
+  pin_memory: true
