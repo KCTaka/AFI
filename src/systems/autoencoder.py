@@ -189,7 +189,7 @@ class AutoEncoder(pl.LightningModule):
         self._log_metric_values("Validation", "Loss", loss_weighted, additional_context="weighted", on_step=False, on_epoch=True)
         self._log_metric_values("Validation", "Loss", loss_unweighted, on_step=False, on_epoch=True)
         
-        percep_recon_loss = loss_weighted["perceptual"] + loss_weighted["reconst"]
+        percep_recon_loss = loss_unweighted["perceptual"] + loss_unweighted["reconst"]
         self.log("Validation/percep_recon_loss", percep_recon_loss, on_step=False, on_epoch=True, prog_bar=True, logger=True, sync_dist=True)
 
     def on_validation_epoch_end(self):

@@ -4,9 +4,6 @@ import autorootcwd
 import torch
 torch.set_float32_matmul_precision('medium')
 
-# wandb sweep --project "AE test 256x256" configs/sweep/wandb_ae.yaml
-# wandb agent 'Anime-Frame-Interpolation/AE test 256x256/xgan3zyz'
-
 import hydra
 import lightning as pl
 from lightning.pytorch import Callback, LightningDataModule, LightningModule, Trainer

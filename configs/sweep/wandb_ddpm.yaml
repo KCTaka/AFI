@@ -1,3 +1,4 @@
+program: "src/train_ddpm.py"
 name: sweep_ddpm
 method: bayes
 metric:
@@ -5,19 +6,19 @@ metric:
   goal: minimize
 
 parameters:
-  ddpm.model_diffusion.t_emb_dim:
+  models.diffusion.t_emb_dim:
     distribution: int_uniform
     min: 128
     max: 1024
-  ddpm.noise_scheduler.num_timesteps:
+  noise_scheduler.num_timesteps:
     distribution: int_uniform
     min: 500
     max: 3000
-  ddpm.noise_scheduler.beta_start:
+  noise_scheduler.beta_start:
     distribution: log_uniform_values
     min: 1e-5
     max: 1e-3
-  ddpm.noise_scheduler.beta_end:
+  noise_scheduler.beta_end:
     distribution: log_uniform_values
     min: 1e-3
     max: 1e-1
@@ -33,3 +34,9 @@ parameters:
 early_terminate:
   type: "hyperband"
   min_iter: 2
+
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - ${args_no_hyphens}

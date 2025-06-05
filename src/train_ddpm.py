@@ -32,20 +32,18 @@ def load_pretrained_ae(run, artifact_path: str, models_cfg: DictConfig):
     
     return model_ae
 
-def train(main_cfg: DictConfig):
+@hydra.main(version_base=None, config_path="../configs", config_name="train_ddpm")
+def train(cfg: DictConfig):
     run = wandb.init(
-        project=main_cfg.loggers.wandb.project,
+        project=cfg.loggers.wandb.project,
         job_type="sweep"
     )
     
     model_ae = load_pretrained_ae(
         run=run,
-        artifact_path="Anime-Frame-Interpolation/Anime Auto Encoder/model-cyfz4n65:v59",
-        models_cfg=main_cfg.models
+        artifact_path="<team-name>/<project-name>/<model-name>:v<version-number>",
+        models_cfg=cfg.models
     )
-    
-    sweep_cfg = flat_dict_to_nested_dict(wandb.config)
-    cfg = OmegaConf.merge(main_cfg, sweep_cfg)
 
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.datamodule)
     
@@ -65,29 +63,29 @@ def train(main_cfg: DictConfig):
         datamodule=datamodule,
     )
 
-@hydra.main(version_base=None, config_path="../configs", config_name="train_ddpm")
-def main(cfg: DictConfig):
+# This method for some reason only works with one GPU. Tried other ways, but its best to run wandb sweep from the command line. 
+# def main(cfg: DictConfig):
     
-    if cfg.sweep is None:
-        train(main_cfg=cfg)
-        return
+#     if cfg.sweep is None:
+#         train(main_cfg=cfg)
+#         return
     
-    train_ddpm = lambda: train(main_cfg=cfg)
+#     train_ddpm = lambda: train(main_cfg=cfg)
 
-    sweep_cfg = OmegaConf.to_container(cfg.sweep, resolve=True)
+#     sweep_cfg = OmegaConf.to_container(cfg.sweep, resolve=True)
 
-    sweep_id = wandb.sweep(
-        sweep_cfg,
-        project=cfg.loggers.wandb.project,
-    )
+#     sweep_id = wandb.sweep(
+#         sweep_cfg,
+#         project=cfg.loggers.wandb.project,
+#     )
     
-    wandb.agent(
-        sweep_id,
-        function=train_ddpm,
-        count=cfg.sweep.agent.count,
-        project=cfg.loggers.wandb.project,
-    )
+#     wandb.agent(
+#         sweep_id,
+#         function=train_ddpm,
+#         count=cfg.sweep_agent_count,
+#         project=cfg.loggers.wandb.project,
+#     )
 
 
 if __name__ == "__main__":
-    main()
+    train()

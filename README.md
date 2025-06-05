@@ -1,91 +1,123 @@
-# Animation Frame Interpolation (AFI) Project
+# Stable Diffusion with VQ-VAE and U-Net
 
-## Overview
+Thid project aims to build and train a stable diffusion model with VQ-VAE + U-Net architecture. The objective is to familiarize myself with the PyTorch lightning + Hydra + Weights & Biases workflow. PyTorch lightning to handle scaled modularized training, Hydra for managing configuration and Weights & Biases for logging, storing, and hyperparameter optimization (WandB Sweep). 
 
-This project aims to develop a high-quality frame interpolation model specifically tailored for **cartoon models** and animation-style videos. The primary objective is to enhance video fluidity by increasing frames per second (FPS) while meticulously preserving the original motion dynamics and artistic nuances. This is a solo endeavor by an engineering student, focusing on practical application and learning within a resource-constrained environment.
+## Table of Contents
 
-## Project Goal
+- [Project Overview](#project-overview)
+- [Technologies Used](#technologies-used)
+- [Setup and Installation](#setup-and-installation)
+- [Training](#training)
+  - [Training VQ-VAE](#training-vq-vae)
+  - [Training U-Net Diffusion Model](#training-u-net-diffusion-model)
+- [Hyperparameter Optimization](#hyperparameter-optimization)
+  - [VQ-VAE Hyperparameter Optimization](#vq-vae-hyperparameter-optimization)
+  - [U-Net Diffusion Model Hyperparameter Optimization](#u-net-diffusion-model-hyperparameter-optimization)
 
-To create a robust deep learning model capable of:
-*   Interpolating frames in video clips of animations/cartoons.
-*   Maintaining high visual fidelity and consistency of motion.
-*   Operating under the assumption of no scene cuts within processed video segments.
+## Project Overview
 
-## Methodology
+The project requires training two models:
 
-The planned workflow is as follows:
-1.  **Video Preprocessing:** Segment videos into clips, ensuring each clip does not contain scene cuts.
-2.  **Frame Generation:** Utilize a deep learning model, leveraging PyTorch Lightning for modularity and scalability, to generate intermediate frames for each clip, effectively increasing its FPS. Hyperparameter organization and experimentation will be managed using Hydra, with performance logging and Bayesian hyperparameter optimization handled by Weights & Biases.
-3.  **Video Postprocessing:** Reassemble the processed clips to form the final high-frame-rate video.
+1.  **VQ-VAE Training:** Initially, VQ-VAE is trained to learn a latent space with less dimensions that the original image data. It looks to compress 3x128x128 image into a 6x32x32 latent image for a more efficient computation friendly diffusion training. 
+2.  **Diffusion Model Training:** With the pre-trained VQ-VAE, the U-Net learns to generate the latent image distribution. This is done through learning the denoising progress of approximately thousands of steps in the noising process. This allows generation/extrapolation of new data samples from the dataset (CelebHQ dataset)
 
-## Technical Stack & Constraints
+## Tools Used
 
-### Core Technologies:
-*   **Programming Language:** Python
-*   **Deep Learning Framework:** PyTorch, **PyTorch Lightning**
-*   **Experiment Management & Logging:** **Weights & Biases (W&B)**
-*   **Configuration Management:** **Hydra**
-*   **Development Environment:** Visual Studio Code
+*   **Python:** Main programming language.
+*   **PyTorch:** Deep learning framework.
+*   **PyTorch Lightning:** Modularizes and simplifies PyTorch code, while enabling modern standards in state of the art model training. 
+*   **Hydra:** Allows configuration management and command line control.
+*   **Weights & Biases (WandB):** For logging, visualization, and hyperparameter sweeps.
 
-**Note on Evolution:** The project has transitioned its core tooling. Previously, it utilized a combination of Optuna for hyperparameter tuning, `torchrun` for distributed training, raw PyTorch for model implementation, and TensorBoard for logging. This stack has been replaced by PyTorch Lightning (for GPU scalability, modularity, and a more structured training loop), Hydra (for sophisticated hyperparameter and configuration management), and Weights & Biases (for comprehensive experiment tracking, visualization, and advanced hyperparameter optimization features like Bayesian searches).
+## Setup and Installation
 
-### Constraints:
-*   **Hardware:** Limited local disk space; no dedicated CUDA-enabled GPU.
-*   **Budget:** Project budget is capped at $200.
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/KCTaka/Stable-Diffusion-from-Scratch.git
+    cd Stable-Diffusion-from-Scratch
+    ```
 
-## Current Skills & Learning Focus
+2.  **Create and activate a virtual environment (recommended):**
+    ```bash
+    python -m venv venv
+    source venv/bin/activate # On Windows use `venv\Scripts\activate`
+    ```
 
-### Current Proficiencies:
-*   Solid understanding of Machine Learning and Deep Learning fundamentals, including underlying mathematics.
-*   Proficient in PyTorch for model development.
-*   Familiarity with MySQL.
-*   **Experience with PyTorch Lightning, Hydra, and Weights & Biases for streamlined MLOps.**
+3.  **Install dependencies:**
+    (Assuming you have a `requirements.txt` file)
+    ```bash
+    pip install -r requirements.txt
+    ```
+    Alternatively, if you are managing dependencies with Conda and an `environment.yml` file:
+    ```bash
+    conda env create -f environment.yml
+    conda activate <your-env-name>
+    ```
 
-### Areas for Development:
-*   Designing and training large-scale deep learning models.
-*   Adopting professional methodologies for model architecture and training pipelines **within the PyTorch Lightning and Hydra framework.**
-*   Exploring tools and best practices for efficient model development and experimentation **(further leveraging W&B capabilities).**
-*   Techniques for creating and managing large-scale datasets.
+4.  **Set up WandB:**
+    Log in to your WandB account:
+    ```bash
+    wandb login
+    ```
 
-## Project Status
+## Training
 
-### Completed:
-- [x] Initial training set-up for VAE (Variational Autoencoder) and VQ-VAE (Vector Quantized Variational Autoencoder).
-- [x] **Migrated project to PyTorch Lightning for enhanced training structure and scalability.**
-- [x] **Integrated Hydra for configuration management.**
-- [x] **Integrated Weights & Biases for experiment tracking, visualization, and hyperparameter optimization, replacing TensorBoard and Optuna.**
-- [x] Implementation of Adversarial Loss component.
-- [x] Integrate Perceptual Loss (e.g., using VGG16 features).
+This project will use the CelebHQ 
+Dataset used: [CelebA-HQ Resized (256x256)](https://www.kaggle.com/datasets/badasstechie/celebahq-resized-256x256) by Moses Odhiambo on Kaggle.
 
-### In-Progress:
-- [ ] Determine promising hyperparameters for the VAE/VQVAE
+### Training VQ-VAE
 
-### To-Do:
+To train the VQ-VAE model, run the following command from the root of the project:
 
-- [ ] Experiment with U-Net architecture for the core generation task.
-- [ ] Develop and apply methods for dataset filtering and curation.
-- [ ] Implement an advanced discriminator (e.g., "SN-ResNet PatchGAN + SA").
-- [ ] Explore IS-Net as an alternative to or enhancement of U-Net.
-- [ ] Investigate and implement Perceptual Loss based on recent research (e.g., [arXiv:2312.01943](https://arxiv.org/pdf/2312.01943)).
-- [ ] Conduct small-scale training and refinement using a subset of the dataset at 128x128 resolution.
-- [ ] Scale up and refine training for 256x256 resolution.
-- [ ] Further scale up and refine training for 512x128 resolution.
-- [ ] Implement and optimize for large-scale training with the full 512x512 target resolution.
+```bash
+python src/train.py
+```
 
-## Concepts to Explore & Learn
+Configuration for the VQ-VAE training (e.g., model parameters, dataset paths, training hyperparameters) can be managed through Hydra configuration files, located in a `configs` directory.
 
-To enhance this project and personal skill set, the following concepts are targeted for learning and potential integration:
+### Training U-Net Diffusion Model
 
-*   **Advanced GAN Architectures:** Deeper dive into PatchGAN, and understanding architectures like StyleGAN or CycleGAN for inspiration, even if direct application is complex.
-*   **Perceptual Loss Functions:** Beyond VGG-based, explore LPIPS and other metrics that correlate well with human perception of image quality.
-*   **Attention Mechanisms & Transformers:** For capturing long-range dependencies in sequences, potentially beneficial for video tasks.
-*   **Flow Estimation Techniques:** Optical flow can be a powerful input or supervisory signal for frame interpolation.
-*   **Data Augmentation for Video:** Techniques specific to video data to increase dataset robustness.
-*   **Efficient Training Strategies (within PyTorch Lightning):**
-    *   Gradient Accumulation: To simulate larger batch sizes with limited memory.
-    *   Mixed-Precision Training: If adaptable to non-CUDA environments or future cloud use.
-    *   Transfer Learning: Leveraging pre-trained models or components.
-*   **Model Optimization & Quantization:** For eventual efficient inference, though not an immediate priority.
-*   **Cloud Computing Resources:** Exploring cost-effective options for occasional intensive training (e.g., Google Colab Pro, Kaggle Kernels, AWS/Azure spot instances within budget).
-*   **Version Control:** Consistent use of Git and GitHub for project management and collaboration (even for solo projects).
-*   **Automated Hyperparameter Tuning:** **Primarily managed via Weights & Biases Sweeps and Hydra's multi-run capabilities.** Further exploration of advanced techniques within these tools.
+After training the VQ-VAE and obtaining a latent space representation, train the U-Net based diffusion model using:
+
+```bash
+python src/train_ddpm.py
+```
+
+This script will train the U-Net on the latent space data generated by the pre-trained VQ-VAE. Configurations for this stage are also managed by Hydra under the configs directory.
+
+## Hyperparameter Optimization
+
+This project utilizes Weights & Biases Sweeps for hyperparameter optimization.
+
+### VQ-VAE Hyperparameter Optimization
+
+Hyperparameter optimization for the VQ-VAE model:
+
+1.  **Initialize the sweep:**
+    ```bash
+    wandb sweep --project <project-name> configs/sweep/wandb_ae.yaml
+    ```
+    This command will output a sweep ID.
+
+2.  **Run the WandB agent(s):**
+     `<sweep-id>` with the ID obtained from the previous step.
+    ```bash
+    wandb agent <team-name>/<project-name>/<sweep-id>
+    ```
+    You can run multiple agents in parallel (e.g., on different machines or GPUs) to speed up the optimization process.
+
+### U-Net Diffusion Model Hyperparameter Optimization
+
+Hyperparameter optimization for the U-Net diffusion model:
+
+1.  **Initialize the sweep:**
+    ```bash
+    wandb sweep --project <project-name> configs/sweep/wandb_ddpm.yaml
+    ```
+    This command will output a sweep ID.
+
+2.  **Run the WandB agent(s):**
+`<sweep-id>` with the ID obtained from the previous step.
+    ```bash
+    wandb agent <team-name>/<project-name>/<sweep-id>
+    ```
