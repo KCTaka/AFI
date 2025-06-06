@@ -8,7 +8,6 @@ defaults:
   - systems: AutoEncoder
   - datamodule: celebahq-resized
   - trainer: default
-  - sweep: null
   - _self_
 
 loggers:
@@ -17,3 +16,26 @@ loggers:
 
 datamodule:
   num_workers: 16
+
+# SWEEP FOUND BEST CONFIGURATION
+models:
+  autoencoder:
+    beta: 0.6443345881327225
+    down_channels: [32, 64, 128, 256]
+    embedding_dim: 5
+    num_embeddings: 4014
+    num_down_layers: 1
+    num_mid_layers: 4
+    num_up_layers: 2
+    num_heads: 4
+  discriminator:
+    conv_channels: [64, 128, 256]
+
+systems:
+  loss_weights:
+    adversarial: 0.7760262788835401
+    internal: 4.333458542618579
+    perceptual: 0.0012227879638211584
+    reconst: 65.10522954739554
+  lr_d: 9.227559277019527e-06
+  lr_g: 0.0014256583051953369
