@@ -1,0 +1,9 @@
+site_name: Stable Diffusion From Scratch
+site_url: https://kctaka.github.io/Stable-Diffusion-From-Scratch/
+theme:
+  name: material
+
+nav:
+  - Home: index.md
+  - Report: report.md
+  - Reflection: reflection.md
