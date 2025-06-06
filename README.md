@@ -44,7 +44,6 @@ The project requires training two models:
     ```
 
 3.  **Install dependencies:**
-    (Assuming you have a `requirements.txt` file)
     ```bash
     pip install -r requirements.txt
     ```
