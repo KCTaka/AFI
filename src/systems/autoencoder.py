@@ -42,21 +42,21 @@ class AutoEncoder(pl.LightningModule):
         return self._forward(x)[0]
         
     def configure_optimizers(self):
-        optimizer_g = torch.optim.Adam(self.model_ae.parameters(), lr=self.hparams.lr_g, betas=self.hparams.betas_g)
-        optimizer_d = torch.optim.Adam(self.model_d.parameters(), lr=self.hparams.lr_d, betas=self.hparams.betas_d)
+        self.optimizer_g = torch.optim.Adam(self.model_ae.parameters(), lr=self.hparams.lr_g, betas=self.hparams.betas_g)
+        self.optimizer_d = torch.optim.Adam(self.model_d.parameters(), lr=self.hparams.lr_d, betas=self.hparams.betas_d)
         
-        scheduler_g = ReduceLROnPlateau(optimizer_g, mode='min', factor=0.5, patience=3)
+        self.scheduler_g = ReduceLROnPlateau(self.optimizer_g, mode='min', factor=0.5, patience=3)
         return (
             {
-                "optimizer": optimizer_g,
+                "optimizer": self.optimizer_g,
                 "lr_scheduler": {
-                    "scheduler": scheduler_g,
+                    "scheduler": self.scheduler_g,
                     "monitor": "Validation/percep_recon_loss",
                     "frequency": 1,
                 }
             },
             {
-                "optimizer": optimizer_d,
+                "optimizer": self.optimizer_d,
             }
         )
     
@@ -212,6 +212,8 @@ class AutoEncoder(pl.LightningModule):
         latent_images = convert_to_target_visible_channels(latent, target_channels=3, resize=(x.shape[2], x.shape[3]))
         self._log_comparison_images("Validation", x, x_reconst, self.global_step, 
                                     latent_images=latent_images, n_samples=n_samples)
+        
+        self.scheduler_g.step(self.trainer.callback_metrics["Validation/percep_recon_loss"].item())
         
     def test_step(self, batch, batch_idx):
         x = self.get_images(batch)

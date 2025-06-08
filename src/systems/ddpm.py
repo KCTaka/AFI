@@ -27,7 +27,6 @@ class DDPM(pl.LightningModule):
         
         self.criterion = nn.MSELoss()
 
-    # --- Logging utilities (copied/adapted from autoencoder.py) ---
     def _log_metric_values(self, stage, metric_type, metric_values, additional_context="", 
                            on_step=True, on_epoch=False, prog_bar=False, logger=True):
         for key, value in metric_values.items():
