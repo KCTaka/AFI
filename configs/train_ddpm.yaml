@@ -13,6 +13,23 @@ defaults:
   - trainer: default
   - _self_
 
+## USED AUTOENCODER CONFIGURATION
+models:
+  autoencoder:
+    beta: 0.6443345881327225
+    down_channels: [32, 64, 128, 256]
+    embedding_dim: 5
+    num_embeddings: 4014
+    num_down_layers: 1
+    num_mid_layers: 4
+    num_up_layers: 2
+    num_heads: 4
+  discriminator:
+    conv_channels: [64, 128, 256]
+  diffusion:
+    in_channels: 5
+    out_channels: 5
+
 callbacks:
   best_checkpoints:
     monitor: "Validation/Loss-ddpm"
@@ -25,3 +42,6 @@ datamodule:
   batch_size: 32
   num_workers: 8
   pin_memory: true
+
+ae_checkpoint: null # "<team-name>/<project-name>/<model-name>:v<version-number>"
+checkpoint: null # "<team-name>/<project-name>/<model-name>:v<version-number>"

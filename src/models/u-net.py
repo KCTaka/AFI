@@ -109,8 +109,9 @@ class UNet(nn.Module):
     
     
 if __name__ == "__main__":
-    import torch_directml
-    device = torch_directml.device()
+    # import torch_directml
+    # device = torch_directml.device()
+    device = "cpu"
     
     # Example usage
     unet = UNet(

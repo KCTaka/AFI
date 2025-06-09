@@ -6,12 +6,41 @@ metric:
   goal: minimize
 
 parameters:
+  models.diffusion.down_channels:
+    values:
+      - [256, 384, 512, 768]
+      - [128, 256, 512, 768]
+      - [64, 128, 512, 768]
+  models.diffusion.mid_channels:
+    values:
+      - [768, 512]
+      - [768, 512, 512]
   models.diffusion.t_emb_dim:
-    distribution: int_uniform
+    distribution: q_log_uniform_values
     min: 128
     max: 1024
-  noise_scheduler.num_timesteps:
+  models.diffusion.num_down_layers:
     distribution: int_uniform
+    min: 1
+    max: 4
+  models.diffusion.num_mid_layers:
+    distribution: int_uniform
+    min: 1
+    max: 4
+  models.diffusion.num_up_layers:
+    distribution: int_uniform
+    min: 1
+    max: 4
+  models.diffusion.num_heads:
+    values: [2, 4, 8, 16, 32]
+  models.diffusion.conv_out_channels:
+    distribution: q_log_uniform_values
+    min: 32
+    max: 512
+    q: 32
+
+  noise_scheduler.num_timesteps:
+    distribution: q_log_uniform_values
     min: 500
     max: 3000
   noise_scheduler.beta_start:
@@ -27,13 +56,13 @@ parameters:
     min: 1e-6
     max: 1e-3
   datamodule.batch_size:
-    distribution: int_uniform
+    distribution: q_log_uniform_values
     min: 16
     max: 128
 
 early_terminate:
   type: "hyperband"
-  min_iter: 2
+  min_iter: 3
 
 command:
   - ${env}

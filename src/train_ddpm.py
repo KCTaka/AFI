@@ -16,6 +16,9 @@ import wandb
 from src.utils.hydra import instantiate_list, flat_dict_to_nested_dict
 from src.utils.formats import get_relative_model_ckpt_path
 from src.systems.autoencoder import AutoEncoder
+from src.systems.ddpm import DDPM
+
+L.seed_everything(0, workers=True)
 
 def load_pretrained_ae(run, artifact_path: str, models_cfg: DictConfig):
     model_ae = hydra.utils.instantiate(models_cfg.autoencoder)
@@ -32,23 +35,45 @@ def load_pretrained_ae(run, artifact_path: str, models_cfg: DictConfig):
     
     return model_ae
 
+def load_checkpoint(run, artifact_path: str, models_cfg: DictConfig):
+    model_ae = hydra.utils.instantiate(models_cfg.autoencoder)
+    
+    artifact = run.use_artifact(artifact_path, type="model")
+    artifact_dir = artifact.download()
+    print(f"Artifact downloaded to: {artifact_dir}")
+    artifact_dir = get_relative_model_ckpt_path(artifact_dir)
+    print(f"Relative path to artifact: {artifact_dir}")
+    system_ddpm = DDPM.load_from_checkpoint(artifact_dir, strict=False, model_ae=model_ae)
+    
+    return system_ddpm
+
 @hydra.main(version_base=None, config_path="../configs", config_name="train_ddpm")
 def train(cfg: DictConfig):
     run = wandb.init(
         project=cfg.loggers.wandb.project,
-        job_type="sweep"
     )
     
-    model_ae = load_pretrained_ae(
-        run=run,
-        artifact_path="<team-name>/<project-name>/<model-name>:v<version-number>",
-        models_cfg=cfg.models
-    )
+    if cfg.checkpoint is not None:
+        system_ddpm: LightningModule = load_checkpoint(
+            run=run,
+            artifact_path=cfg.checkpoint,
+            models_cfg=cfg.models
+        )
+        
+    else:
+        if cfg.ae_checkpoint is None:
+            raise ValueError("No autoencoder checkpoint provided. Please provide a valid checkpoint path in the configuration. You need a trained autoencoder to train the DDPM model.")
+        model_ae = load_pretrained_ae(
+            run=run,
+            artifact_path=cfg.ae_checkpoint,
+            models_cfg=cfg.models
+        )
+        
+        system_ddpm: LightningModule = hydra.utils.instantiate(cfg.ddpm, model_ae=model_ae)
+
 
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.datamodule)
     
-    system_ddpm: LightningModule = hydra.utils.instantiate(cfg.ddpm, model_ae=model_ae)
-
     logger: list[Logger] = instantiate_list(cfg.loggers.values(), cls=Logger)
     callbacks: list[Callback] = instantiate_list(cfg.callbacks.values(), cls=Callback)
 

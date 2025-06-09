@@ -40,3 +40,5 @@ systems:
     reconst: 65.10522954739554
   lr_d: 9.227559277019527e-06
   lr_g: 0.0014256583051953369
+
+checkpoint: null # "<team-name>/<project-name>/<model-name>:v<version-number>"
