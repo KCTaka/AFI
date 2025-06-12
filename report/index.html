@@ -1,0 +1,1130 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://kctaka.github.io/Stable-Diffusion-from-Scratch/report/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../reflection/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+    
+    
+      
+        <title>Report - Stable Diffusion From Scratch</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.342714a4.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#stable-diffusion-report" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Stable Diffusion From Scratch" class="md-header__button md-logo" aria-label="Stable Diffusion From Scratch" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Stable Diffusion From Scratch
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Report
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Stable Diffusion From Scratch" class="md-nav__button md-logo" aria-label="Stable Diffusion From Scratch" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Stable Diffusion From Scratch
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Report
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Report
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#autoencoder" class="md-nav__link">
+    <span class="md-ellipsis">
+      AutoEncoder
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="AutoEncoder">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hyperparameter-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hyperparameter Optimization:
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hyperparameter Optimization:">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adversarial-losses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adversarial Losses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codebook-and-commitment-losses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Codebook and Commitment Losses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#perceptual-losses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Perceptual Losses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reconstruction-losses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reconstruction Losses
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notable-sweep-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notable Sweep Configurations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Notable Sweep Configurations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-1-2025-06-05_02-06-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run 1: 2025-06-05_02-06-18
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-2-2025-06-05_03-23-41" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run 2: 2025-06-05_03-23-41
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-3-2025-06-05_05-12-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run 3: 2025-06-05_05-12-17
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-4-2025-06-05_08-52-13" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run 4: 2025-06-05_08-52-13
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#final-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Final Model
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sweep-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sweep Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#denoising-diffusion-probabilitic-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Denoising Diffusion Probabilitic Model
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Denoising Diffusion Probabilitic Model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hyperparameter-optimization_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hyperparameter Optimization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notable-sweep-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notable Sweep Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Notable Sweep Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run1-giddy-grass-43" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run1: Giddy Grass 43
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run2-eager-sound-42" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run2: Eager Sound 42
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reflection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Reflection
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#autoencoder" class="md-nav__link">
+    <span class="md-ellipsis">
+      AutoEncoder
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="AutoEncoder">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hyperparameter-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hyperparameter Optimization:
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hyperparameter Optimization:">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adversarial-losses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adversarial Losses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codebook-and-commitment-losses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Codebook and Commitment Losses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#perceptual-losses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Perceptual Losses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reconstruction-losses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reconstruction Losses
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notable-sweep-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notable Sweep Configurations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Notable Sweep Configurations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-1-2025-06-05_02-06-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run 1: 2025-06-05_02-06-18
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-2-2025-06-05_03-23-41" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run 2: 2025-06-05_03-23-41
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-3-2025-06-05_05-12-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run 3: 2025-06-05_05-12-17
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-4-2025-06-05_08-52-13" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run 4: 2025-06-05_08-52-13
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#final-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Final Model
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sweep-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sweep Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#denoising-diffusion-probabilitic-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Denoising Diffusion Probabilitic Model
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Denoising Diffusion Probabilitic Model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hyperparameter-optimization_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hyperparameter Optimization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notable-sweep-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notable Sweep Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Notable Sweep Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run1-giddy-grass-43" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run1: Giddy Grass 43
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run2-eager-sound-42" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run2: Eager Sound 42
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="stable-diffusion-report">Stable Diffusion Report</h1>
+<p>In stable diffusion, you must train two different components, the autoencoder and the diffusion model. </p>
+<ul>
+<li>Autoencoder to compress the high resolution image into something less computationally required for generation later on. </li>
+<li>Diffusion model to learnt to generate an image in the latent space from noise. 
+This report goes over the history and progress of generating a non-existing image. </li>
+</ul>
+<p>For each models, the following general steps were followed:</p>
+<ol>
+<li>Find a set of hyperparameter configuration that generally works on about 30 epochs. </li>
+<li>Hyperparameter Optimize (Sweep) centered around that found hyperparameter configuration. The target loss after 10 epochs is recorded (with the exception of early stopping pruning)</li>
+<li>The optimized configuration is trained for 50 or 100 epochs.</li>
+</ol>
+<h2 id="autoencoder">AutoEncoder</h2>
+<p>Vector-Quantized Variational Auto-Encoder (VQVAE) was used to convert images into smaller sized latent images. VQVAE leveraged codebook look up that discretized latent values and allowed a more representative latent space of the original image. The autoencoder first encodes the image into a pre-quantized latent image, quantize through looking-up pixel-embedding to the nearest codebook embedding, and decode the post-quantized latent image where the losses are calculated. To ensure the pre-quantized pixel-embedding does not stray too far from the embedding, codebook+commitment losses are calculated and backpropagated along with the image-related losses.  </p>
+<h3 id="hyperparameter-optimization">Hyperparameter Optimization:</h3>
+<details>
+<summary>Sweep Configurations (Hyperparameter range)</summary>
+<div class="highlight"><pre><span></span><code><span class="nt">program</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;src/train_ddpm.py&quot;</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sweep_ddpm</span>
+<span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bayes</span>
+<span class="nt">metric</span><span class="p">:</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Validation/Loss-ddpm&quot;</span>
+<span class="nt">goal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minimize</span>
+
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="nt">models.diffusion.down_channels</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">values</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">256</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">384</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">512</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">768</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">128</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">256</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">512</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">768</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">64</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">128</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">512</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">768</span><span class="p p-Indicator">]</span>
+<span class="nt">models.diffusion.mid_channels</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">values</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">768</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">512</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">768</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">512</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">512</span><span class="p p-Indicator">]</span>
+<span class="nt">models.diffusion.t_emb_dim</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">distribution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">q_log_uniform_values</span>
+<span class="w">    </span><span class="nt">min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">128</span>
+<span class="w">    </span><span class="nt">max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1024</span>
+<span class="nt">models.diffusion.num_down_layers</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">distribution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">int_uniform</span>
+<span class="w">    </span><span class="nt">min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="nt">models.diffusion.num_mid_layers</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">distribution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">int_uniform</span>
+<span class="w">    </span><span class="nt">min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="nt">models.diffusion.num_up_layers</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">distribution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">int_uniform</span>
+<span class="w">    </span><span class="nt">min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="nt">models.diffusion.num_heads</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">4</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">8</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">16</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">32</span><span class="p p-Indicator">]</span>
+<span class="nt">models.diffusion.conv_out_channels</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">distribution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">q_log_uniform_values</span>
+<span class="w">    </span><span class="nt">min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span>
+<span class="w">    </span><span class="nt">max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">512</span>
+<span class="w">    </span><span class="nt">q</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span>
+
+<span class="nt">noise_scheduler.num_timesteps</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">distribution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">q_log_uniform_values</span>
+<span class="w">    </span><span class="nt">min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span>
+<span class="w">    </span><span class="nt">max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3000</span>
+<span class="nt">noise_scheduler.beta_start</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">distribution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">log_uniform_values</span>
+<span class="w">    </span><span class="nt">min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-5</span>
+<span class="w">    </span><span class="nt">max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-3</span>
+<span class="nt">noise_scheduler.beta_end</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">distribution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">log_uniform_values</span>
+<span class="w">    </span><span class="nt">min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-3</span>
+<span class="w">    </span><span class="nt">max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-1</span>
+<span class="nt">ddpm.lr</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">distribution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">log_uniform_values</span>
+<span class="w">    </span><span class="nt">min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-6</span>
+<span class="w">    </span><span class="nt">max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-3</span>
+<span class="nt">datamodule.batch_size</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">distribution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">q_log_uniform_values</span>
+<span class="w">    </span><span class="nt">min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">16</span>
+<span class="w">    </span><span class="nt">max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">128</span>
+
+<span class="nt">early_terminate</span><span class="p">:</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;hyperband&quot;</span>
+<span class="nt">min_iter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+
+<span class="nt">command</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${env}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${interpreter}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${program}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${args_no_hyphens}</span>
+</code></pre></div>
+</details>
+<h4 id="adversarial-losses">Adversarial Losses</h4>
+<figure>
+<p><img alt="Adversarial-Loss" src="../vqvae/Train_Adversarial-Loss.png" width="300" /></p>
+<figcaption></figcaption>
+</figure>
+<h4 id="codebook-and-commitment-losses">Codebook and Commitment Losses</h4>
+<figure>
+<p><img alt="Internal-Loss" src="../vqvae/Train_Codebook-Commitment-Loss.png" width="300" /></p>
+<figcaption></figcaption>
+</figure>
+<h4 id="perceptual-losses">Perceptual Losses</h4>
+<figure>
+<p><img alt="Perceptual-Loss" src="../vqvae/Train_Perceptual-Loss.png" width="300" /></p>
+<figcaption></figcaption>
+</figure>
+<h4 id="reconstruction-losses">Reconstruction Losses</h4>
+<figure>
+<p><img alt="Reconstruction-Loss" src="../vqvae/Train_Reconstruction-Loss.png" width="300" />  </p>
+<figcaption></figcaption>
+</figure>
+<h3 id="notable-sweep-configurations">Notable Sweep Configurations</h3>
+<p>The following are some notable directions the vqvae began to learn the dataset to latent space conversion.</p>
+<h4 id="run-1-2025-06-05_02-06-18">Run 1: 2025-06-05_02-06-18</h4>
+<figure>
+<p><img alt="run1" src="../vqvae/comparison-images_2025-06-05_02-06-18.png" width="400" /></p>
+<figcaption>
+<p>Comparing the original image (top row), latent image (middle row), reconstructed image (bottom row) for run 1: 2025-06-05_02-06-18. Epoch: 10</p>
+</figcaption>
+</figure>
+<details>
+<summary>Parameter Configurations (Run 1)</summary>
+<div class="highlight"><pre><span></span><code><span class="nt">datamodule</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">16</span>
+<span class="nt">models</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">autoencoder</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">beta</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.031434697351974974</span>
+<span class="w">    </span><span class="nt">down_channels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">16</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">64</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">128</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">256</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">embedding_dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6</span>
+<span class="w">    </span><span class="nt">num_down_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">    </span><span class="nt">num_mid_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">num_up_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">num_embeddings</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3708</span>
+<span class="w">    </span><span class="nt">num_heads</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">  </span><span class="nt">discriminator</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">conv_channels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">16</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">32</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">64</span><span class="p p-Indicator">]</span>
+<span class="nt">systems</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">loss_weights</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">adversarial</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.02277441690906937</span>
+<span class="w">    </span><span class="nt">internal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">18.28967516429656</span>
+<span class="w">    </span><span class="nt">perceptual</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0002447386292215411</span>
+<span class="w">    </span><span class="nt">reconst</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.14919996447016615</span>
+<span class="nt">lr</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">d</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.6026788983424064e-06</span>
+<span class="w">  </span><span class="nt">g</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.6362412179266015e-05</span>
+</code></pre></div>
+</details>
+<p>It can be noted that the reconstructed images in this run displays a generic face failing to generate any unique features for each image. The output shows a 'mean' or 'averaged' face, common when the autoencoder is not able to capture distinct features and resort to a single averaged face where the loss is the lowest for all images. </p>
+<p>A reason for this failure is likely due to the high internal loss weight of 18.29, compared to the other loss weights of adversarial, perceptual and reconstruction where they are 0.023, 0.00024, and 0.15 respectively. The dominant internal loss (the sum of codebook and commitment loss with beta=0.03) renders the visual losses negligible which focuses the autoencoder in learning a stable yet meaningless codebook. This as a result teaches the model to produce a safe and averaged image to the overly stablized latent space.  </p>
+<h4 id="run-2-2025-06-05_03-23-41">Run 2: 2025-06-05_03-23-41</h4>
+<figure>
+<p><img alt="run2" src="../vqvae/comparison-images_2025-06-05_03-23-41.png" width="400" /></p>
+<figcaption>
+<p>Comparing the original image (top row), latent image (middle row), reconstructed image (bottom row) for run 2: 2025-06-05_03-23-41. Epoch: 10</p>
+</figcaption>
+</figure>
+<details>
+<summary>Parameter Configurations (Run 2)</summary>
+<div class="highlight"><pre><span></span><code><span class="nt">datamodule</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">16</span>
+<span class="nt">models</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">autoencoder</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">beta</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.07830023604089383</span>
+<span class="w">    </span><span class="nt">down_channels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">16</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">64</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">128</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">256</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">embedding_dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6</span>
+<span class="w">    </span><span class="nt">num_down_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">    </span><span class="nt">num_mid_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">num_up_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">num_embeddings</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2327</span>
+<span class="w">    </span><span class="nt">num_heads</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">  </span><span class="nt">discriminator</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">conv_channels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">64</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">128</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">256</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">512</span><span class="p p-Indicator">]</span>
+<span class="nt">systems</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">loss_weights</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">adversarial</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.00008909160625646387</span>
+<span class="w">    </span><span class="nt">internal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0823042928039229</span>
+<span class="w">    </span><span class="nt">perceptual</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.002681812647958391</span>
+<span class="w">    </span><span class="nt">reconst</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90.66739309587147</span>
+<span class="nt">lr</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">d</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.637625577905393e-06</span>
+<span class="w">  </span><span class="nt">g</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.637665086781343e-05</span>
+</code></pre></div>
+</details>
+<p>Run 2 shows improvement in reconstruction quality in-comparison to the previous run 1. The output images are relatively recognizable - showing uniquness to a certain extent - indicating the latent space holds a form of original image information. With that said, the reconstructed images lacks detail and appears to be blurry. The latent images displays extreme colors which could suggest the models inability to encode and compress the image in a meaningful manner. </p>
+<p>Blurry images are common in high reconstruction loss weight as the MSELoss focuses on structure and color (where models commonly lean towards average pixel values), and fails to capture high-frequency details. The latent image's appears to be noisy as the codebook embeddings is disorganized and is used in a patch-by-patch manner in solving the pixel-matching puzzle instead of abstract features. Furthermore, the perceptual and adversarial losses are far too insignficiant for the model to weight importance on sharp and realistic textures. The model in this case is more of a pixel matcher than a image compressor preserving important information. </p>
+<h4 id="run-3-2025-06-05_05-12-17">Run 3: 2025-06-05_05-12-17</h4>
+<figure>
+<p><img alt="run3" src="../vqvae/comparison-images_2025-06-05_05-12-17.png" width="400" /></p>
+<figcaption>
+<p>Comparing the original image (top row), latent image (middle row), reconstructed image (bottom row) for run 3: 2025-06-05_05-12-17. Epoch: 10</p>
+</figcaption>
+</figure>
+<details>
+<summary>Parameter Configurations (Run 3)</summary>
+<div class="highlight"><pre><span></span><code><span class="nt">datamodule</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">16</span>
+<span class="nt">models</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">autoencoder</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">beta</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.033203203889255975</span>
+<span class="w">    </span><span class="nt">down_channels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">16</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">64</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">128</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">256</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">embedding_dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6</span>
+<span class="w">    </span><span class="nt">num_down_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">num_mid_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">num_up_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">num_embeddings</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5377</span>
+<span class="w">    </span><span class="nt">num_heads</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span>
+<span class="w">  </span><span class="nt">discriminator</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">conv_channels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">16</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">32</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">64</span><span class="p p-Indicator">]</span>
+<span class="nt">systems</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">loss_weights</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">adversarial</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0002824064862999839</span>
+<span class="w">    </span><span class="nt">internal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8.710494682214064</span>
+<span class="w">    </span><span class="nt">perceptual</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0002784928081396848</span>
+<span class="w">    </span><span class="nt">reconst</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5440532552186204</span>
+<span class="nt">lr</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">d</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.424399124491354e-06</span>
+<span class="w">  </span><span class="nt">g</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.00010944209261365034</span>
+</code></pre></div>
+</details>
+<p>The results in run3 is the best so far. Despite the color imbalance, each reconstructed image maintains the structural and peceptual detail of the original. We may observe the codebook embeddings in the latent images holding less variance in values compared to run2 and run4, which implies the strength that is being applied to the codebook+commitment losses.</p>
+<p>The issue in run 3 is mainly the  imbalanaced loss weighting, where similar to run 1, the internal loss is the most dominant. The difference between the losses is not as severe in this case, allowing a more accurate sharp reconstruction, but primarily lacks in coloring and the reconstruction seems to be more faded out / brown-ish tinted. Indicating the reconstruction loss could be weighted more to focus on color. The dominant internal loss preoccupies the model to focus o n codeboook usage rather than the image quality. This configuration has a high codebook capacity with 5377 number of embeddings and a 32-headed attention mechanism which should effectively capture features as they do much better comparing the run 2. </p>
+<h4 id="run-4-2025-06-05_08-52-13">Run 4: 2025-06-05_08-52-13</h4>
+<figure>
+<p><img alt="run4" src="../vqvae/comparison-images_2025-06-05_08-52-13.png" width="400" /></p>
+<figcaption>
+<p>Comparing the original image (top row), latent image (middle row), reconstructed image (bottom row) for run 4: 2025-06-05_08-52-13. Epoch: 10</p>
+</figcaption>
+</figure>
+<details>
+<summary>Parameter Configurations (Run 4)</summary>
+<div class="highlight"><pre><span></span><code><span class="nt">datamodule</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">64</span>
+<span class="nt">models</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">autoencoder</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">beta</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.6443345881327225</span>
+<span class="w">    </span><span class="nt">down_channels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">32</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">64</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">128</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">256</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">embedding_dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">    </span><span class="nt">num_down_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">num_mid_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">    </span><span class="nt">num_up_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">num_embeddings</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4014</span>
+<span class="w">    </span><span class="nt">num_heads</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">  </span><span class="nt">discriminator</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">conv_channels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">64</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">128</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">256</span><span class="p p-Indicator">]</span>
+<span class="nt">systems</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">loss_weights</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">adversarial</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.7760262788835401</span>
+<span class="w">    </span><span class="nt">internal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4.333458542618579</span>
+<span class="w">    </span><span class="nt">perceptual</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0012227879638211584</span>
+<span class="w">    </span><span class="nt">reconst</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">65.10522954739554</span>
+<span class="nt">lr</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">d</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">9.227559277019527e-06</span>
+<span class="w">  </span><span class="nt">g</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0014256583051953369</span>
+</code></pre></div>
+</details>
+<p>Run4 had the best configuration out of the tested ones. We may also observe this from the comparison image above. The images produced substantially sharper and retains more details with accurate color reconstruction. The model is able to capture facial expressions, positions, and textural details like hair. The latent images appears to be vibrant and distinctly structured, indication good latent compression. Similar to run 3, the latent images visibly correspond to the input feature semantics (face, eyes, hair, and clothes).</p>
+<p>The reason of this apparent success is due to a good, balanced, and effective configuration of losses and model architecture. Even though the reconstruction loss is weighted high, strong adversarial weight contributed to ensure human-like features taking advantage and unravelling from what is learned by discriminator. </p>
+<h3 id="final-model">Final Model</h3>
+<h3 id="sweep-configuration">Sweep Configuration</h3>
+<h2 id="denoising-diffusion-probabilitic-model">Denoising Diffusion Probabilitic Model</h2>
+<h3 id="hyperparameter-optimization_1">Hyperparameter Optimization</h3>
+<p><img alt="DDPM-Train_MSELoss" src="../ddpm/train_loss.png" width="300" /> <img alt="DDPM-Val-MSELoss" src="../ddpm/val_loss.png" width="300" /></p>
+<h3 id="notable-sweep-configuration">Notable Sweep Configuration</h3>
+<p>Out of the 30 or so run trials, I ran 2 of the best configurations up until 100 epochs. The results are the following.</p>
+<h4 id="run1-giddy-grass-43">Run1: Giddy Grass 43</h4>
+<p><img alt="ddpm-run1-loss" src="../ddpm/MSELoss_giddy-grass-43.png" width="300" /> 
+<img alt="ddpm-run1-image" src="../ddpm/denoising-image_giddy-grass-43.png" width="300" /></p>
+<details>
+<summary>Hyperparameter Configuration</summary>
+<div class="highlight"><pre><span></span><code><span class="nt">datamodule</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">56</span>
+<span class="w">  </span><span class="nt">num_workers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="nt">ddpm</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.00013256608655142174</span>
+<span class="nt">models</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">diffusion</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">conv_out_channels</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">352</span>
+<span class="w">    </span><span class="nt">down_channels</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">256</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">384</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">512</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">768</span>
+<span class="w">    </span><span class="nt">mid_channels</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">768</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">512</span>
+<span class="w">    </span><span class="nt">num_down_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">num_mid_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">num_up_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">    </span><span class="nt">num_heads</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">t_emb_dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">309</span>
+<span class="nt">noise_scheduler</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">beta_start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.00010505422393815704</span>
+<span class="w">  </span><span class="nt">beta_end</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.06392103975835639</span>
+<span class="w">  </span><span class="nt">num_timesteps</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2617</span>
+</code></pre></div>
+</details>
+<h4 id="run2-eager-sound-42">Run2: Eager Sound 42</h4>
+<p><img alt="ddpm-run2-loss" src="../ddpm/MSELoss_eager-sound-42.png" width="300" />
+<img alt="ddpm-run2-image" src="../ddpm/denoising-image_eager-sound-42.png" width="300" /></p>
+<details>
+<summary>Hyperparameter Configuration</summary>
+<div class="highlight"><pre><span></span><code><span class="nt">datamodule</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">25</span>
+<span class="w">  </span><span class="nt">num_workers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="nt">ddpm</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7.016014614095296e-06</span>
+<span class="nt">models</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">diffusion</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">conv_out_channels</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">336</span>
+<span class="w">    </span><span class="nt">down_channels</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">128</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">256</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">512</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">768</span>
+<span class="w">    </span><span class="nt">mid_channels</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">768</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">512</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">512</span>
+<span class="w">    </span><span class="nt">num_down_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">num_mid_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">    </span><span class="nt">num_up_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">num_heads</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">    </span><span class="nt">t_emb_dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">743</span>
+<span class="nt">noise_scheduler</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">beta_start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.000986132869834486</span>
+<span class="w">  </span><span class="nt">beta_end</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.08828010703949035</span>
+<span class="w">  </span><span class="nt">num_timesteps</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">929</span>
+</code></pre></div>
+</details>
+<h2 id="conclusion">Conclusion</h2>
+<p>Oh my god I just noticed I needed to quantize the final output for the best final results. </p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      
+    
+  </body>
+</html>
