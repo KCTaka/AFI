@@ -35,15 +35,17 @@ def load_pretrained_ae(run, artifact_path: str, models_cfg: DictConfig):
     
     return model_ae
 
-def load_checkpoint(run, artifact_path: str, models_cfg: DictConfig):
-    model_ae = hydra.utils.instantiate(models_cfg.autoencoder)
+def load_checkpoint(run, artifact_path: str, cfg: DictConfig):
+    model_ae = hydra.utils.instantiate(cfg.models.autoencoder)
+    model_diffusion = hydra.utils.instantiate(cfg.models.diffusion)
+    noise_scheduler = hydra.utils.instantiate(cfg.noise_scheduler)
     
     artifact = run.use_artifact(artifact_path, type="model")
     artifact_dir = artifact.download()
     print(f"Artifact downloaded to: {artifact_dir}")
     artifact_dir = get_relative_model_ckpt_path(artifact_dir)
     print(f"Relative path to artifact: {artifact_dir}")
-    system_ddpm = DDPM.load_from_checkpoint(artifact_dir, strict=False, model_ae=model_ae)
+    system_ddpm = DDPM.load_from_checkpoint(artifact_dir, strict=False, model_ae=model_ae, model_diffusion=model_diffusion, noise_scheduler=noise_scheduler)
     
     return system_ddpm
 
@@ -57,7 +59,7 @@ def train(cfg: DictConfig):
         system_ddpm: LightningModule = load_checkpoint(
             run=run,
             artifact_path=cfg.checkpoint,
-            models_cfg=cfg.models
+            cfg=cfg
         )
         
     else:

@@ -43,5 +43,7 @@ There were so many problems that just wouldn't go my way:
 
 Each of the above problems (and many more) just led to me not being able to progress for so long. 
 
+Another problem I just encountered is that the model didn't save after completion on W&B for some reason and I lost progress on 100 epochs. At least I had the logging saved, but I would have to train from scratch again if I wanteed the model file. Also, I forgot to log the quantized latent image after all denoising process during validation phase.
+
 ## **Comments**
 Although I hated how even the simple things I couldn't progress, the outcome was better than what I followed on paper. **This is definitely a large step** towards the big project

@@ -15,7 +15,7 @@ loggers:
     project: "AE Test 256x256"
 
 datamodule:
-  num_workers: 8
+  num_workers: 4
   batch_size: 64
 
 # SWEEP FOUND BEST CONFIGURATION
